@@ -1,0 +1,425 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        UserRole @unique
+  description String?
+  permissions Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+}
+
+model User {
+  id                String          @id @default(cuid())
+  email             String          @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  phone             String?
+  avatar            String?
+  isActive          Boolean         @default(true)
+  lastLoginAt       DateTime?
+  roleId            String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  auditLogs         AuditLog[]
+  chatSessions      ChatSession[]
+  customersCreated  Customer[]      @relation("CustomerCreatedBy")
+  customersUpdated  Customer[]      @relation("CustomerUpdatedBy")
+  ispsCreated       ISP[]           @relation("IspCreatedBy")
+  ispsUpdated       ISP[]           @relation("IspUpdatedBy")
+  payments          Payment[]       @relation("RecordedPayments")
+  quotationsCreated Quotation[]     @relation("QuotationCreatedBy")
+  sitesCreated      Site[]          @relation("CreatedByUser")
+  sitesUpdated      Site[]          @relation("UpdatedByUser")
+  assignedTickets   Ticket[]        @relation("AssignedTickets")
+  createdTickets    Ticket[]        @relation("CreatedTickets")
+  updatedTickets    Ticket[]        @relation("UpdatedTickets")
+  ticketMessages    TicketMessage[]
+  role              Role            @relation(fields: [roleId], references: [id])
+
+  @@index([email])
+  @@index([roleId])
+}
+
+model Customer {
+  id             String        @id @default(cuid())
+  customerCode   String        @unique
+  companyName    String
+  contactPerson  String
+  email          String
+  phone          String
+  alternatePhone String?
+  address        String
+  city           String
+  state          String
+  pincode        String
+  gstNumber      String?
+  panNumber      String?
+  billingAddress String?
+  billingCity    String?
+  billingState   String?
+  billingPincode String?
+  notes          String?
+  isActive       Boolean       @default(true)
+  createdById    String
+  updatedById    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  chatSessions   ChatSession[]
+  createdBy      User          @relation("CustomerCreatedBy", fields: [createdById], references: [id])
+  updatedBy      User?         @relation("CustomerUpdatedBy", fields: [updatedById], references: [id])
+  payments       Payment[]
+  quotations     Quotation[]
+  sites          Site[]
+  tickets        Ticket[]
+
+  @@index([customerCode])
+  @@index([email])
+  @@index([phone])
+  @@index([companyName])
+}
+
+model ISP {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  displayName   String
+  contactPerson String?
+  email         String?
+  phone         String?
+  address       String?
+  city          String?
+  state         String?
+  website       String?
+  logoUrl       String?
+  latitude      Float?
+  longitude     Float?
+  isActive      Boolean  @default(true)
+  notes         String?
+  createdById   String
+  updatedById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     User     @relation("IspCreatedBy", fields: [createdById], references: [id])
+  updatedBy     User?    @relation("IspUpdatedBy", fields: [updatedById], references: [id])
+  sites         Site[]
+
+  @@index([name])
+}
+
+model Site {
+  id                  String          @id @default(cuid())
+  siteCode            String          @unique
+  customerId          String
+  ispId               String
+  planName            String
+  bandwidth           String
+  mrc                 Decimal         @db.Decimal(12, 2)
+  otc                 Decimal         @db.Decimal(12, 2)
+  staticIpCharge      Decimal         @default(0) @db.Decimal(12, 2)
+  staticIpCount       Int             @default(0)
+  otherCharges        Decimal         @default(0) @db.Decimal(12, 2)
+  status              SiteStatus      @default(FEASIBILITY_PENDING)
+  installationAddress String
+  installationCity    String
+  installationState   String
+  installationPincode String
+  latitude            Float?
+  longitude           Float?
+  connectionType      String?
+  circuitId           String?
+  provisionedAt       DateTime?
+  renewalDate         DateTime?
+  disconnectedAt      DateTime?
+  notes               String?
+  createdById         String
+  updatedById         String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  chatSessions        ChatSession[]
+  payments            Payment[]
+  quotations          Quotation[]
+  createdBy           User            @relation("CreatedByUser", fields: [createdById], references: [id])
+  customer            Customer        @relation(fields: [customerId], references: [id])
+  isp                 ISP             @relation(fields: [ispId], references: [id])
+  updatedBy           User?           @relation("UpdatedByUser", fields: [updatedById], references: [id])
+  credentials         SiteCredential?
+  tickets             Ticket[]
+
+  @@index([siteCode])
+  @@index([customerId])
+  @@index([ispId])
+  @@index([status])
+  @@index([renewalDate])
+}
+
+model SiteCredential {
+  id               String   @id @default(cuid())
+  siteId           String   @unique
+  username         String?
+  passwordEnc      String?
+  routerIp         String?
+  routerModel      String?
+  vlanId           String?
+  pppoeUsername    String?
+  pppoePasswordEnc String?
+  staticIps        Json?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  site             Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model Ticket {
+  id           String          @id @default(cuid())
+  ticketNumber String          @unique
+  title        String
+  description  String
+  status       TicketStatus    @default(OPEN)
+  priority     TicketPriority  @default(MEDIUM)
+  source       TicketSource    @default(MANUAL)
+  customerId   String
+  siteId       String?
+  assignedToId String?
+  createdById  String
+  updatedById  String?
+  slaDueAt     DateTime?
+  resolvedAt   DateTime?
+  closedAt     DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  chatSessions ChatSession[]
+  assignedTo   User?           @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  createdBy    User            @relation("CreatedTickets", fields: [createdById], references: [id])
+  updatedBy    User?           @relation("UpdatedTickets", fields: [updatedById], references: [id])
+  customer     Customer        @relation(fields: [customerId], references: [id])
+  site         Site?           @relation(fields: [siteId], references: [id])
+  messages     TicketMessage[]
+
+  @@index([ticketNumber])
+  @@index([customerId])
+  @@index([siteId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id          String       @id @default(cuid())
+  ticketId    String
+  userId      String
+  message     String
+  isInternal  Boolean      @default(false)
+  attachments Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  chatMessage ChatMessage?
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([userId])
+}
+
+model ChatSession {
+  id             String        @id @default(cuid())
+  platform       ChatPlatform
+  platformUserId String
+  platformChatId String?
+  customerId     String
+  siteId         String?
+  ticketId       String?
+  userId         String?
+  isActive       Boolean       @default(true)
+  lastMessageAt  DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  messages       ChatMessage[]
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  site           Site?         @relation(fields: [siteId], references: [id])
+  ticket         Ticket?       @relation(fields: [ticketId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
+
+  @@unique([platform, platformUserId])
+  @@index([customerId])
+  @@index([siteId])
+  @@index([ticketId])
+  @@index([isActive])
+}
+
+model ChatMessage {
+  id                String         @id @default(cuid())
+  sessionId         String
+  platform          ChatPlatform
+  platformMessageId String?
+  direction         String
+  content           String
+  messageType       String         @default("text")
+  metadata          Json?
+  ticketMessageId   String?        @unique
+  createdAt         DateTime       @default(now())
+  session           ChatSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  ticketMessage     TicketMessage? @relation(fields: [ticketMessageId], references: [id])
+
+  @@index([sessionId])
+  @@index([platformMessageId])
+}
+
+model Payment {
+  id              String      @id @default(cuid())
+  paymentNumber   String      @unique
+  customerId      String
+  siteId          String?
+  amount          Decimal     @db.Decimal(12, 2)
+  type            PaymentType
+  description     String?
+  paymentDate     DateTime    @default(now())
+  paymentMethod   String?
+  transactionId   String?
+  referenceNumber String?
+  recordedById    String
+  invoiceNumber   String?
+  invoiceUrl      String?
+  receiptUrl      String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  recordedBy      User        @relation("RecordedPayments", fields: [recordedById], references: [id])
+  site            Site?       @relation(fields: [siteId], references: [id])
+
+  @@index([paymentNumber])
+  @@index([customerId])
+  @@index([siteId])
+  @@index([type])
+  @@index([paymentDate])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  oldData    Json?
+  newData    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Quotation {
+  id              String          @id @default(cuid())
+  quotationNumber String          @unique
+  customerId      String
+  siteId          String?
+  title           String
+  description     String?
+  validityDate    DateTime
+  status          String          @default("DRAFT")
+  subtotal        Decimal         @db.Decimal(12, 2)
+  taxAmount       Decimal         @default(0) @db.Decimal(12, 2)
+  totalAmount     Decimal         @db.Decimal(12, 2)
+  terms           String?
+  notes           String?
+  createdById     String
+  sentAt          DateTime?
+  acceptedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  createdBy       User            @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+  customer        Customer        @relation(fields: [customerId], references: [id])
+  site            Site?           @relation(fields: [siteId], references: [id])
+  items           QuotationItem[]
+
+  @@index([quotationNumber])
+  @@index([customerId])
+  @@index([siteId])
+  @@index([status])
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  description String
+  quantity    Int       @default(1)
+  unitPrice   Decimal   @db.Decimal(12, 2)
+  totalPrice  Decimal   @db.Decimal(12, 2)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  @@index([quotationId])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ISP_OWNER
+  SALES
+  NOC
+  FINANCE
+  SUPPORT
+  CLIENT
+}
+
+enum SiteStatus {
+  FEASIBILITY_PENDING
+  SURVEY_IN_PROGRESS
+  FEASIBILITY_APPROVED
+  FEASIBILITY_REJECTED
+  PROVISIONING
+  DELIVERED_ACTIVE
+  RENEWAL_DUE
+  SUSPENDED
+  DISCONNECTED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+enum TicketSource {
+  MANUAL
+  TELEGRAM
+  WHATSAPP
+  EMAIL
+}
+
+enum PaymentType {
+  OTC
+  MRC
+  STATIC_IP
+  OTHER
+}
+
+enum ChatPlatform {
+  TELEGRAM
+  WHATSAPP
+}

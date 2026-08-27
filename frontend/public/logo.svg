@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background gradient circle -->
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="brandGradientReverse" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Outer glow circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#brandGradient)" opacity="0.15"/>
+  <circle cx="32" cy="32" r="28" fill="url(#brandGradientReverse)" opacity="0.1"/>
+
+  <!-- Main rounded square background -->
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="url(#brandGradient)"/>
+
+  <!-- Inner highlight -->
+  <rect x="6" y="6" width="52" height="52" rx="12" fill="url(#brandGradientReverse)" opacity="0.2"/>
+
+  <!-- Lightning bolt / Zap icon -->
+  <path d="M32 10 L24 28 L28 28 L22 44 L40 26 L36 26 L42 10 Z" fill="white" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.1))"/>
+
+  <!-- Accent dots -->
+  <circle cx="18" cy="18" r="2.5" fill="#2dd4bf" opacity="0.8"/>
+  <circle cx="46" cy="46" r="2" fill="#5eead4" opacity="0.6"/>
+  <circle cx="50" cy="14" r="1.5" fill="#99f6e4" opacity="0.5"/>
+</svg>
