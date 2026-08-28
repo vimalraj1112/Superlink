@@ -53,7 +53,7 @@ export const listUsers = asyncHandler(async (req: Request, res: Response) => {
       : {}),
   };
 
-  const [users, totalItems] = await Promise.all([
+  const [rawUsers, totalItems] = await Promise.all([
     prisma.user.findMany({
       where,
       skip,
@@ -67,6 +67,9 @@ export const listUsers = asyncHandler(async (req: Request, res: Response) => {
     }),
     prisma.user.count({ where }),
   ]);
+
+  // Strip passwordHash from all users
+  const users = rawUsers.map(({ passwordHash, ...user }) => user);
 
   sendPaginatedSuccess(res, users, 'Users fetched successfully', page, limit, totalItems);
 });
