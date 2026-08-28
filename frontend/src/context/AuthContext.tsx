@@ -75,11 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await api.post('/auth/login', { email, password });
 
       if (response.data.success) {
-        const { user, tokens } = response.data.data;
+        const { tokens } = response.data.data;
         const { accessToken, refreshToken } = tokens;
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        setState({ user, loading: false, error: null });
+        // Fetch full user profile with role permissions after login
+        await checkAuth();
       } else {
         setState(prev => ({ ...prev, loading: false, error: response.data.message || 'Login failed' }));
         throw new Error(response.data.message || 'Login failed');
