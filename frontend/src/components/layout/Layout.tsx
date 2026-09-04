@@ -17,7 +17,7 @@ export default function Layout() {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-0">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-0 h-full overflow-hidden">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto pb-20 lg:pb-0">
           <Outlet />

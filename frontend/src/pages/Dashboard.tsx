@@ -5,9 +5,6 @@ import {
   MapPin,
   TicketCheck,
   AlertTriangle,
-  TrendingUp,
-  Clock,
-  CheckCircle,
   Wifi,
 } from 'lucide-react';
 import { customerApi, siteApi, ticketApi, ispApi } from '@/api/endpoints';
@@ -66,11 +63,10 @@ export default function Dashboard() {
     queryFn: () => ispApi.list({ limit: 1 }),
   });
 
-  const totalCustomers = customersData?.data?.meta?.total || 0;
-  const totalSites = sitesData?.data?.meta?.total || 0;
-  const totalTickets = ticketsData?.data?.meta?.total || 0;
-  const openTickets = openTicketsData?.data?.meta?.total || 0;
-  const totalIsps = ispsData?.data?.meta?.total || 0;
+  const totalCustomers = customersData?.data?.meta?.totalItems || 0;
+  const totalSites = sitesData?.data?.meta?.totalItems || 0;
+  const openTickets = openTicketsData?.data?.meta?.totalItems || 0;
+  const totalIsps = ispsData?.data?.meta?.totalItems || 0;
   const recentTickets: Ticket[] = ticketsData?.data?.data || [];
 
   return (

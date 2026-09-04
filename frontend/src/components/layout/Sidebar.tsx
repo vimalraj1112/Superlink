@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useLocation, NavLink } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
@@ -14,7 +13,6 @@ import {
   FileText,
   Map,
   UploadCloud,
-  DownloadCloud,
   User,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -36,22 +34,22 @@ const navigationSections: NavSection[] = [
   {
     title: 'Overview',
     items: [
-      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT'] },
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT', 'CLIENT'] },
     ],
   },
   {
     title: 'Customer Management',
     items: [
       { name: 'Customers', href: '/customers', icon: Users, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'SUPPORT', 'FINANCE'] },
-      { name: 'Sites', href: '/sites', icon: MapPin, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'SUPPORT'] },
+      { name: 'Sites', href: '/sites', icon: MapPin, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'SUPPORT', 'CLIENT'] },
       { name: 'ISPs', href: '/isps', icon: Wifi, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'NOC'] },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { name: 'Tickets', href: '/tickets', icon: TicketCheck, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT'] },
-      { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'FINANCE'] },
+      { name: 'Tickets', href: '/tickets', icon: TicketCheck, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT', 'CLIENT'] },
+      { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'FINANCE', 'CLIENT'] },
       { name: 'Quotations', href: '/quotations', icon: FileText, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES'] },
     ],
   },
@@ -64,7 +62,7 @@ const navigationSections: NavSection[] = [
   {
     title: 'Analytics & Maps',
     items: [
-      { name: 'GIS Map', href: '/gis', icon: Map, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'NOC'] },
+      { name: 'GIS Map', href: '/gis', icon: Map, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'NOC', 'CLIENT'] },
     ],
   },
   {
@@ -101,7 +99,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
 
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col',
+          'fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col h-screen overflow-hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           sidebarWidth
         )}

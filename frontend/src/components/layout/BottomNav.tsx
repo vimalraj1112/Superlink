@@ -16,17 +16,17 @@ import {
 import { useAuth } from '@/context/AuthContext';
 
 const mainNav = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT'] },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT', 'CLIENT'] },
   { name: 'Customers', href: '/customers', icon: Users, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'SUPPORT', 'FINANCE'] },
-  { name: 'Sites', href: '/sites', icon: MapPin, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'SUPPORT'] },
-  { name: 'Tickets', href: '/tickets', icon: TicketCheck, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT'] },
+  { name: 'Sites', href: '/sites', icon: MapPin, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'SUPPORT', 'CLIENT'] },
+  { name: 'Tickets', href: '/tickets', icon: TicketCheck, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT', 'CLIENT'] },
 ];
 
 const moreNav = [
   { name: 'ISPs', href: '/isps', icon: Wifi, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'NOC'] },
-  { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'FINANCE'] },
+  { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'FINANCE', 'CLIENT'] },
   { name: 'Quotations', href: '/quotations', icon: FileText, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES'] },
-  { name: 'GIS Map', href: '/gis', icon: Map, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'NOC'] },
+  { name: 'GIS Map', href: '/gis', icon: Map, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'NOC', 'CLIENT'] },
   { name: 'Settings', href: '/settings', icon: Settings, roles: ['SUPER_ADMIN', 'ISP_OWNER'] },
 ];
 
@@ -43,7 +43,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden z-40" aria-label="Mobile bottom navigation">
       <div className="flex justify-around">
-        {filteredMain.map((item, index) => {
+        {filteredMain.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
           return (
