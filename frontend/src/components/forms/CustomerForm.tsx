@@ -102,7 +102,8 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.customerCode.trim()) newErrors.customerCode = 'Customer code is required';
+    // Customer code is auto-generated on create, only validate on edit
+    if (isEditing && !formData.customerCode.trim()) newErrors.customerCode = 'Customer code is required';
     if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
     if (!formData.contactPerson.trim()) newErrors.contactPerson = 'Contact person is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
@@ -226,18 +227,30 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="label">Customer Code <span className="text-red-500">*</span></label>
-              <input
-                type="text"
-                value={formData.customerCode}
-                onChange={(e) => handleChange('customerCode', e.target.value)}
-                className={`input ${errors.customerCode ? 'border-red-500' : ''}`}
-                placeholder={isEditing ? 'Auto-generated' : 'Auto-generated if left empty'}
-                disabled={isEditing}
-              />
-              {errors.customerCode && <p className="text-sm text-red-500 mt-1">{errors.customerCode}</p>}
-            </div>
+            {!isEditing && (
+              <div>
+                <label className="label">Customer Code</label>
+                <input
+                  type="text"
+                  value="Auto-generated"
+                  className="input bg-gray-50"
+                  disabled
+                />
+              </div>
+            )}
+            {isEditing && (
+              <div>
+                <label className="label">Customer Code</label>
+                <input
+                  type="text"
+                  value={formData.customerCode}
+                  onChange={(e) => handleChange('customerCode', e.target.value)}
+                  className={`input ${errors.customerCode ? 'border-red-500' : ''}`}
+                  disabled
+                />
+                {errors.customerCode && <p className="text-sm text-red-500 mt-1">{errors.customerCode}</p>}
+              </div>
+            )}
             <div>
               <label className="label">Company Name <span className="text-red-500">*</span></label>
               <input
