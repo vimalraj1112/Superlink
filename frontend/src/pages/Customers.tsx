@@ -16,7 +16,7 @@ export default function Customers() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [search, setSearch] = useState('');
-  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(undefined);
+  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(true);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -86,7 +86,7 @@ export default function Customers() {
       header: 'Actions',
       className: 'text-right',
       render: (row: Customer) => (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => navigate(`/customers/${row.id}`)}
             className="btn btn-ghost btn-sm"
@@ -232,7 +232,7 @@ export default function Customers() {
           pagination={data?.data?.meta ? {
             page: data.data.meta.page,
             limit: data.data.meta.limit,
-            total: data.data.meta.total,
+            total: data.data.meta.totalItems,
             totalPages: data.data.meta.totalPages,
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),

@@ -8,6 +8,7 @@ import { SiteStatus, SiteStatusLabels, ConnectionType, ConnectionTypeLabels } fr
 import { toast } from 'sonner';
 import Modal from '@/components/common/Modal';
 import CoordinatePicker from '@/components/map/CoordinatePicker';
+import SearchableSelect from '@/components/common/SearchableSelect';
 
 interface SiteFormProps {
   isOpen: boolean;
@@ -257,32 +258,32 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
               />
             </div>
             <div>
-              <label className="label">Customer <span className="text-red-500">*</span></label>
-              <select
+              <SearchableSelect
+                label="Customer"
                 value={formData.customerId}
-                onChange={(e) => handleChange('customerId', e.target.value)}
-                className={`input ${errors.customerId ? 'border-red-500' : ''}`}
-              >
-                <option value="">Select Customer</option>
-                {(customersData?.data?.data || []).map((customer: any) => (
-                  <option key={customer.id} value={customer.id}>{customer.companyName}</option>
-                ))}
-              </select>
-              {errors.customerId && <p className="text-sm text-red-500 mt-1">{errors.customerId}</p>}
+                onChange={(value) => handleChange('customerId', value)}
+                options={(customersData?.data?.data || []).map((customer: any) => ({
+                  value: customer.id,
+                  label: customer.companyName,
+                }))}
+                placeholder="Select Customer"
+                error={errors.customerId}
+                required
+              />
             </div>
             <div>
-              <label className="label">ISP <span className="text-red-500">*</span></label>
-              <select
+              <SearchableSelect
+                label="ISP"
                 value={formData.ispId}
-                onChange={(e) => handleChange('ispId', e.target.value)}
-                className={`input ${errors.ispId ? 'border-red-500' : ''}`}
-              >
-                <option value="">Select ISP</option>
-                {(ispsData?.data?.data || []).map((isp: any) => (
-                  <option key={isp.id} value={isp.id}>{isp.displayName || isp.name}</option>
-                ))}
-              </select>
-              {errors.ispId && <p className="text-sm text-red-500 mt-1">{errors.ispId}</p>}
+                onChange={(value) => handleChange('ispId', value)}
+                options={(ispsData?.data?.data || []).map((isp: any) => ({
+                  value: isp.id,
+                  label: isp.displayName || isp.name,
+                }))}
+                placeholder="Select ISP"
+                error={errors.ispId}
+                required
+              />
             </div>
             <div>
               <label className="label">Status <span className="text-red-500">*</span></label>

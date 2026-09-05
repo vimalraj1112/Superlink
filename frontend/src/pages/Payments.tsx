@@ -115,7 +115,7 @@ export default function Payments() {
       header: 'Actions',
       className: 'text-right',
       render: (row: Payment) => (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
           <button
             onClick={() => navigate(`/payments/${row.id}`)}
             className="btn btn-ghost btn-sm"
@@ -288,7 +288,7 @@ export default function Payments() {
           pagination={data?.data?.meta ? {
             page: data.data.meta.page,
             limit: data.data.meta.limit,
-            total: data.data.meta.total,
+            total: data.data.meta.totalItems,
             totalPages: data.data.meta.totalPages,
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),

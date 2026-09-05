@@ -103,8 +103,8 @@ function DataTable<T>({
     }
   };
 
-  const SortIcon = ({ key }: { key: string }) => {
-    if (sortKey !== key) return <ChevronsUpDown className="w-4 h-4 text-gray-400" />;
+  const SortIcon = ({ columnKey }: { columnKey: string }) => {
+    if (sortKey !== columnKey) return <ChevronsUpDown className="w-4 h-4 text-gray-400" />;
     return sortOrder === 'asc' ? (
       <ChevronUp className="w-4 h-4 text-primary-600" />
     ) : (
@@ -155,7 +155,7 @@ function DataTable<T>({
                 >
                   <div className="flex items-center gap-1">
                     {column.header}
-                    {column.sortable !== false && sortable && <SortIcon key={column.key} />}
+                    {column.sortable !== false && sortable && <SortIcon columnKey={column.key} />}
                   </div>
                 </th>
               ))}

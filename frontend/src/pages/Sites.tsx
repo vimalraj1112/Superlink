@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Filter, ChevronDown, ChevronUp, Eye, Edit, Trash2, MapPin } from 'lucide-react';
+import { Plus, Search, Filter, ChevronDown, ChevronUp, Eye, Edit, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { siteApi, customerApi, ispApi } from '@/api/endpoints';
 import DataTable from '@/components/common/DataTable';
@@ -17,7 +17,7 @@ export default function Sites() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<SiteStatus | ''>('');
   const [customerId, setCustomerId] = useState('');
   const [ispId, setIspId] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
@@ -188,7 +188,7 @@ export default function Sites() {
 
         {showFilters && (
           <div className="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <select value={status} onChange={e => { setStatus(e.target.value); setPage(1); }} className="input text-sm">
+            <select value={status} onChange={e => { setStatus(e.target.value as SiteStatus | ''); setPage(1); }} className="input text-sm">
               <option value="">All Statuses</option>
               {Object.values(SiteStatus).map(value => (
                 <option key={value} value={value}>{SiteStatusLabels[value]}</option>
@@ -233,7 +233,7 @@ export default function Sites() {
           pagination={data?.data?.meta ? {
             page: data.data.meta.page,
             limit: data.data.meta.limit,
-            total: data.data.meta.total,
+            total: data.data.meta.totalItems,
             totalPages: data.data.meta.totalPages,
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),

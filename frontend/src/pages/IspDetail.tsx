@@ -6,11 +6,20 @@ import { ispApi, siteApi } from '@/api/endpoints';
 import { toast } from 'sonner';
 import type { ISP, Site } from '@/types/models';
 import StatusBadge from '@/components/common/StatusBadge';
+import IspForm from '@/components/forms/IspForm';
 
 export default function IspDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'sites'>('overview');
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editingIsp, setEditingIsp] = useState<ISP | null>(null);
+
+  const closeIspForm = () => {
+    setFormModalOpen(false);
+    setEditingIsp(null);
+    refetchIsp();
+  };
 
   const { data: ispData, isLoading: ispLoading, error: ispError, refetch: refetchIsp } = useQuery({
     queryKey: ['isp', id],
@@ -25,7 +34,7 @@ export default function IspDetail() {
     enabled: !!id,
   });
 
-  const isp: ISP | undefined = ispData?.data;
+  const isp: ISP | undefined = ispData?.data?.data;
   const sites: Site[] = sitesData?.data?.data || [];
 
   useEffect(() => {
@@ -236,10 +245,10 @@ export default function IspDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3 sm:ml-auto">
-          <Link to={`/isps/${id}/edit`} className="btn btn-secondary">
+          <button onClick={() => { setEditingIsp(isp); setFormModalOpen(true); }} className="btn btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
             Edit
-          </Link>
+          </button>
           <button onClick={handleDelete} className="btn btn-danger">
             Delete
           </button>
@@ -281,6 +290,8 @@ export default function IspDetail() {
           {activeTab === 'overview' ? overviewContent : sitesContent}
         </div>
       </div>
+
+      <IspForm isOpen={formModalOpen} onClose={closeIspForm} initialData={editingIsp} />
     </div>
   );
 }

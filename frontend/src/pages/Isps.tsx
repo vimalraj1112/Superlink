@@ -7,6 +7,7 @@ import { ispApi } from '@/api/endpoints';
 import DataTable from '@/components/common/DataTable';
 import StatusBadge from '@/components/common/StatusBadge';
 import Modal from '@/components/common/Modal';
+import IspForm from '@/components/forms/IspForm';
 import type { ISP } from '@/types/models';
 import { toast } from 'sonner';
 
@@ -15,12 +16,14 @@ export default function Isps() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [search, setSearch] = useState('');
-  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(undefined);
+  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(true);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [ispToDelete, setIspToDelete] = useState<ISP | null>(null);
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editingIsp, setEditingIsp] = useState<ISP | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['isps', page, limit, search, isActiveFilter, sortBy, sortOrder],
@@ -34,6 +37,12 @@ export default function Isps() {
     }),
     placeholderData: previousData => previousData,
   });
+
+  const closeIspForm = () => {
+    setFormModalOpen(false);
+    setEditingIsp(null);
+    refetch();
+  };
 
   const handleDelete = async () => {
     if (!ispToDelete) return;
@@ -102,7 +111,7 @@ export default function Isps() {
           <button onClick={() => navigate(`/isps/${row.id}`)} className="btn btn-ghost btn-sm" title="View">
             <Eye className="w-4 h-4" />
           </button>
-          <button onClick={() => navigate(`/isps/${row.id}/edit`)} className="btn btn-ghost btn-sm" title="Edit">
+          <button onClick={() => { setEditingIsp(row); setFormModalOpen(true); }} className="btn btn-ghost btn-sm" title="Edit">
             <Edit className="w-4 h-4" />
           </button>
           <button
@@ -127,10 +136,10 @@ export default function Isps() {
           <h1 className="text-2xl font-bold text-gray-900">ISPs</h1>
           <p className="text-gray-600 mt-1">Manage Internet Service Provider directory</p>
         </div>
-        <Link to="/isps/new" className="btn btn-primary">
+        <button onClick={() => { setEditingIsp(null); setFormModalOpen(true); }} className="btn btn-primary">
           <Plus className="w-4 h-4 mr-2" />
           Add ISP
-        </Link>
+        </button>
       </div>
 
       <div className="card">
@@ -215,7 +224,7 @@ export default function Isps() {
           pagination={data?.data?.meta ? {
             page: data.data.meta.page,
             limit: data.data.meta.limit,
-            total: data.data.meta.total,
+            total: data.data.meta.totalItems,
             totalPages: data.data.meta.totalPages,
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),
@@ -235,6 +244,8 @@ export default function Isps() {
           </div>
         </Modal>
       )}
+
+      <IspForm isOpen={formModalOpen} onClose={closeIspForm} initialData={editingIsp} />
     </div>
   );
 }

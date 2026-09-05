@@ -245,7 +245,7 @@ export default function SiteDetail() {
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Link>
-          <button onClick={() => setDeleteModalOpen(true)} className="btn-danger">
+          <button onClick={() => setDeleteModalOpen(true)} className="btn btn-danger">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
           </button>

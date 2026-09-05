@@ -365,7 +365,7 @@ export default function CustomerDetail() {
                 pagination={sitesData?.data?.meta ? {
                   page: sitesData.data.meta.page,
                   limit: sitesData.data.meta.limit,
-                  total: sitesData.data.meta.total,
+                  total: sitesData.data.meta.totalItems,
                   totalPages: sitesData.data.meta.totalPages,
                   onPageChange: (p: number) => setSitePage(p),
                   onLimitChange: (l: number) => setSiteLimit(l),
@@ -388,7 +388,7 @@ export default function CustomerDetail() {
                 pagination={ticketsData?.data?.meta ? {
                   page: ticketsData.data.meta.page,
                   limit: ticketsData.data.meta.limit,
-                  total: ticketsData.data.meta.total,
+                  total: ticketsData.data.meta.totalItems,
                   totalPages: ticketsData.data.meta.totalPages,
                   onPageChange: (p: number) => setTicketPage(p),
                   onLimitChange: (l: number) => setTicketLimit(l),

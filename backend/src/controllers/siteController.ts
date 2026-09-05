@@ -43,12 +43,12 @@ async function generateSiteCode(): Promise<string> {
 export const listSites = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, skip, take } = getPaginationParams(req);
   const search = getSearchQuery(req);
-  const status = req.query.status as SiteStatus | undefined;
+  const status = req.query.status as SiteStatus | 'ALL' | undefined;
   const customerId = req.query.customerId as string | undefined;
   const ispId = req.query.ispId as string | undefined;
 
   const where: Prisma.SiteWhereInput = {
-    ...(status ? { status } : {}),
+    ...(status && status !== 'ALL' ? { status } : status !== 'ALL' ? { status: { not: SiteStatus.DISCONNECTED } } : {}),
     ...(customerId ? { customerId } : {}),
     ...(ispId ? { ispId } : {}),
     ...(search
