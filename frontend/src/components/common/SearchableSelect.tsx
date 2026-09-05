@@ -58,6 +58,7 @@ export default function SearchableSelect({
       if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         setIsOpen(true);
+        setSearchTerm('');
         setHighlightedIndex(0);
       }
       return;
@@ -127,7 +128,15 @@ export default function SearchableSelect({
       <div
         ref={containerRef}
         className="relative"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={(e) => {
+          if (!disabled && !isOpen) {
+            e.stopPropagation();
+            setIsOpen(true);
+            setSearchTerm('');
+            setHighlightedIndex(0);
+            inputRef.current?.focus();
+          }
+        }}
       >
         <div
           className={clsx(
