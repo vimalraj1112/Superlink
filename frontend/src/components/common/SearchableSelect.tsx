@@ -120,61 +120,41 @@ export default function SearchableSelect({
     inputRef.current?.focus();
   };
 
+  const handleToggle = (e: React.MouseEvent) => {
+    if (disabled) return;
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      setSearchTerm('');
+      setHighlightedIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  };
+
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
     <div className={clsx('relative', className)}>
       <label className="label">{label} {required && <span className="text-red-500">*</span>}</label>
-      <div
-        ref={containerRef}
-        className="relative"
-        onClick={(e) => {
-          if (!disabled && !isOpen) {
-            e.stopPropagation();
-            setIsOpen(true);
-            setSearchTerm('');
-            setHighlightedIndex(0);
-            inputRef.current?.focus();
-          }
-        }}
-      >
+      <div ref={containerRef} className="relative">
         <div
           className={clsx(
-            'input flex items-center justify-between',
+            'input flex items-center justify-between cursor-pointer',
             error && 'border-red-500',
             disabled && 'bg-gray-100 cursor-not-allowed'
           )}
+          onClick={handleToggle}
         >
           <div className="flex-1 flex items-center gap-2 min-w-0">
-            {isOpen && (
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={searchTerm}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  onClick={e => e.stopPropagation()}
-                  placeholder={placeholder}
-                  className="input pl-10"
-                  autoComplete="off"
-                />
-              </div>
-            )}
-            {!isOpen && (
-              <div className="flex-1 flex items-center gap-2 min-w-0" onClick={e => e.stopPropagation()}>
-                {value ? (
-                  <>
-                    <span className="truncate">{selectedOption?.label || value}</span>
-                    <button type="button" onClick={handleClear} className="text-gray-400 hover:text-gray-600 p-1">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </>
-                ) : (
-                  <span className="text-gray-400">{placeholder}</span>
-                )}
-              </div>
+            {value ? (
+              <>
+                <span className="truncate">{selectedOption?.label || value}</span>
+                <button type="button" onClick={handleClear} className="text-gray-400 hover:text-gray-600 p-1 ml-2">
+                  <X className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <span className="text-gray-400">{placeholder}</span>
             )}
           </div>
           {isOpen ? (
@@ -185,28 +165,44 @@ export default function SearchableSelect({
         </div>
 
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border border-gray-300 rounded-md shadow-lg scrollbar-thin">
-            {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-gray-500">
-                {searchTerm ? 'No matching options' : 'No options available'}
-              </div>
-            ) : (
-              filteredOptions.map((option, index) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleOptionClick(option.value)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  className={clsx(
-                    'w-full px-4 py-2 text-left text-sm',
-                    index === highlightedIndex ? 'bg-primary-50 text-primary-900' : 'text-gray-900 hover:bg-gray-50',
-                    option.value === value && 'font-medium text-primary-600'
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))
-            )}
+          <div className="absolute z-50 w-full mt-1 max-h-60 overflow-hidden bg-white border border-gray-300 rounded-md shadow-lg scrollbar-thin">
+            <div className="relative p-2 border-b border-gray-200">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={searchTerm}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                onClick={e => e.stopPropagation()}
+                placeholder="Search..."
+                className="input pl-10"
+                autoComplete="off"
+              />
+            </div>
+            <div className="max-h-[calc(60vh-44px)] overflow-y-auto">
+              {filteredOptions.length === 0 ? (
+                <div className="px-4 py-3 text-sm text-gray-500">
+                  {searchTerm ? 'No matching options' : 'No options available'}
+                </div>
+              ) : (
+                filteredOptions.map((option, index) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleOptionClick(option.value)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    className={clsx(
+                      'w-full px-4 py-2 text-left text-sm',
+                      index === highlightedIndex ? 'bg-primary-50 text-primary-900' : 'text-gray-900 hover:bg-gray-50',
+                      option.value === value && 'font-medium text-primary-600'
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         )}
       </div>
