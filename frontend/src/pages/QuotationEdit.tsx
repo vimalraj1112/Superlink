@@ -150,19 +150,26 @@ export default function QuotationEdit() {
     e.preventDefault();
     if (!validateForm()) return;
 
+    const itemsWithTotal = formData.items.map(item => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.quantity * item.unitPrice,
+      sortOrder: 0,
+    }));
+
     const payload = {
       title: formData.title,
       customerId: formData.customerId,
       siteId: formData.siteId || null,
-      validityDate: formData.validityDate,
+      validityDate: new Date(formData.validityDate).toISOString(),
       description: formData.description,
       terms: formData.terms,
       notes: formData.notes,
-      items: formData.items.map(item => ({
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      })),
+      subtotal,
+      taxAmount,
+      totalAmount,
+      items: itemsWithTotal,
     };
 
     if (isNew) {

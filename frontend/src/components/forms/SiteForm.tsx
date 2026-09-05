@@ -232,11 +232,20 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     // Convert numeric strings to numbers
     const numericFields = ['mrc', 'otc', 'staticIpCharge', 'otherCharges'];
     numericFields.forEach(field => {
-      if (submitData[field]) submitData[field] = parseFloat(submitData[field]);
-      else delete submitData[field];
+      const value = submitData[field];
+      if (value !== '' && value !== undefined && value !== null) {
+        submitData[field] = parseFloat(value);
+      } else {
+        delete submitData[field];
+      }
     });
 
-    submitData.staticIpCount = parseInt(submitData.staticIpCount) || 0;
+    const staticIpCount = submitData.staticIpCount;
+    if (staticIpCount !== '' && staticIpCount !== undefined && staticIpCount !== null) {
+      submitData.staticIpCount = parseInt(staticIpCount) || 0;
+    } else {
+      submitData.staticIpCount = 0;
+    }
 
     // Convert dates
     if (submitData.provisionedAt) submitData.provisionedAt = new Date(submitData.provisionedAt).toISOString();
