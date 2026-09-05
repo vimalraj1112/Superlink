@@ -270,17 +270,29 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
             Customer & ISP
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="label">Site Code</label>
-              <input
-                type="text"
-                value={formData.siteCode}
-                onChange={(e) => handleChange('siteCode', e.target.value)}
-                className="input"
-                placeholder={isEditing ? 'Auto-generated' : 'Auto-generated if empty'}
-                disabled={isEditing}
-              />
-            </div>
+            {!isEditing && (
+              <div>
+                <label className="label">Site Code</label>
+                <input
+                  type="text"
+                  value="Auto-generated"
+                  className="input bg-gray-50"
+                  disabled
+                />
+              </div>
+            )}
+            {isEditing && (
+              <div>
+                <label className="label">Site Code</label>
+                <input
+                  type="text"
+                  value={formData.siteCode}
+                  onChange={(e) => handleChange('siteCode', e.target.value)}
+                  className="input"
+                  disabled
+                />
+              </div>
+            )}
             <div>
               <SearchableSelect
                 label="Customer"
