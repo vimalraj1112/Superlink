@@ -93,6 +93,7 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.description.trim()) newErrors.description = 'Description is required';
     if (!formData.customerId) newErrors.customerId = 'Customer is required';
     if (!formData.status) newErrors.status = 'Status is required';
     if (!formData.priority) newErrors.priority = 'Priority is required';
@@ -202,14 +203,15 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
             {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
           </div>
           <div>
-            <label className="label">Description</label>
+            <label className="label">Description <span className="text-red-500">*</span></label>
             <textarea
               value={formData.description}
               onChange={(e) => handleChange('description', e.target.value)}
-              className="input"
+              className={`input ${errors.description ? 'border-red-500' : ''}`}
               rows={4}
               placeholder="Enter ticket description..."
             />
+            {errors.description && <p className="text-sm text-red-500 mt-1">{errors.description}</p>}
           </div>
         </div>
 

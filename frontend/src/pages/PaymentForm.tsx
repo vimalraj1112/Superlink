@@ -50,6 +50,7 @@ export default function PaymentForm() {
   const [showSiteSearch, setShowSiteSearch] = useState(false);
   const [siteSearch, setSiteSearch] = useState('');
   const [sitePage, setSitePage] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Fetch payment data if editing
   const { data: paymentData, isLoading: paymentLoading } = useQuery({
@@ -95,6 +96,22 @@ export default function PaymentForm() {
     }
   }, [paymentData]);
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.customerId) newErrors.customerId = 'Customer is required';
+    if (!formData.amount || formData.amount === '') {
+      newErrors.amount = 'Amount is required';
+    } else if (Number(formData.amount) <= 0) {
+      newErrors.amount = 'Amount must be greater than 0';
+    }
+    if (!formData.type) newErrors.type = 'Type is required';
+    if (!formData.paymentDate) newErrors.paymentDate = 'Payment date is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Create/Update mutation
   const mutation = useMutation({
     mutationFn: isEditing
@@ -107,6 +124,10 @@ export default function PaymentForm() {
       navigate('/payments');
     },
     onError: (err: any) => {
+      if (err.response?.data?.error?.details) {
+        const fieldErrors = err.response.data.error.details;
+        setErrors(fieldErrors);
+      }
       const message = err.response?.data?.message || (isEditing ? 'Failed to update payment' : 'Failed to create payment');
       toast.error(message);
     },
@@ -114,6 +135,8 @@ export default function PaymentForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     const submitData: FormData = {
       customerId: formData.customerId,
       siteId: formData.siteId,
@@ -133,6 +156,7 @@ export default function PaymentForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     if (name === 'customerId') {
       setSelectedCustomer(null);
       setFormData(prev => ({ ...prev, siteId: undefined }));
@@ -169,7 +193,7 @@ export default function PaymentForm() {
               value={selectedCustomer ? `${selectedCustomer.companyName} (${selectedCustomer.customerCode})` : ''}
               onClick={() => setShowCustomerSearch(true)}
               readOnly
-              className="input cursor-pointer"
+              className={`input cursor-pointer ${errors.customerId ? 'border-red-500' : ''}`}
               placeholder="Select a customer"
             />
             {selectedCustomer && (
@@ -185,6 +209,7 @@ export default function PaymentForm() {
               </button>
             )}
           </div>
+          {errors.customerId && <p className="text-sm text-red-500 mt-1">{errors.customerId}</p>}
           <input
             type="hidden"
             name="customerId"
@@ -309,19 +334,21 @@ export default function PaymentForm() {
               onChange={handleChange}
               step="0.01"
               min="0.01"
-              className="input"
+              className={`input ${errors.amount ? 'border-red-500' : ''}`}
               placeholder="Enter amount"
               required
             />
+            {errors.amount && <p className="text-sm text-red-500 mt-1">{errors.amount}</p>}
           </div>
           <div className="space-y-2">
             <label className="label">Type *</label>
-            <select name="type" value={formData.type} onChange={handleChange} className="input">
+            <select name="type" value={formData.type} onChange={handleChange} className={`input ${errors.type ? 'border-red-500' : ''}`}>
               <option value={PaymentType.OTC}>OTC (One Time Charge)</option>
               <option value={PaymentType.MRC}>MRC (Monthly Recurring)</option>
               <option value={PaymentType.STATIC_IP}>Static IP Charge</option>
               <option value={PaymentType.OTHER}>Other</option>
             </select>
+            {errors.type && <p className="text-sm text-red-500 mt-1">{errors.type}</p>}
           </div>
         </div>
 
@@ -333,9 +360,10 @@ export default function PaymentForm() {
             name="paymentDate"
             value={formData.paymentDate}
             onChange={handleChange}
-            className="input"
+            className={`input ${errors.paymentDate ? 'border-red-500' : ''}`}
             required
           />
+          {errors.paymentDate && <p className="text-sm text-red-500 mt-1">{errors.paymentDate}</p>}
         </div>
 
         {/* Description */}
