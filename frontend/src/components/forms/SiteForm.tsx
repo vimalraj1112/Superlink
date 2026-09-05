@@ -131,12 +131,36 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     if (!formData.installationPincode.trim()) newErrors.installationPincode = 'Installation pincode is required';
     else if (!/^\d{6}$/.test(formData.installationPincode)) newErrors.installationPincode = 'Pincode must be 6 digits';
 
-    const numericFields = ['mrc', 'otc', 'staticIpCharge', 'otherCharges'];
-    numericFields.forEach(field => {
-      if (formData[field as keyof typeof formData] && !(Number(formData[field as keyof typeof formData]) >= 0)) {
+    // MRC is required (positive number)
+    if (!formData.mrc || formData.mrc === '') {
+      newErrors.mrc = 'MRC is required';
+    } else if (Number(formData.mrc) <= 0) {
+      newErrors.mrc = 'MRC must be greater than 0';
+    }
+
+    // OTC is required (nonnegative number)
+    if (!formData.otc || formData.otc === '') {
+      newErrors.otc = 'OTC is required';
+    } else if (Number(formData.otc) < 0) {
+      newErrors.otc = 'OTC must be 0 or greater';
+    }
+
+    // Optional numeric fields
+    const optionalNumericFields = ['staticIpCharge', 'otherCharges'];
+    optionalNumericFields.forEach(field => {
+      const value = formData[field as keyof typeof formData];
+      if (value && value !== '' && !(Number(value) >= 0)) {
         newErrors[field] = 'Must be a valid number';
       }
     });
+
+    // Static IP Count
+    const staticIpCount = formData.staticIpCount;
+    const staticIpCountNum = Number(staticIpCount);
+    const hasStaticIpCount = staticIpCount !== undefined && staticIpCount !== null && String(staticIpCount) !== '';
+    if (hasStaticIpCount && (staticIpCountNum < 0 || !Number.isInteger(staticIpCountNum))) {
+      newErrors.staticIpCount = 'Must be a valid integer';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
