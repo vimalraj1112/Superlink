@@ -7,19 +7,20 @@ import { asyncHandler } from '@/middleware/errorHandler';
 import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
 import { UserRole } from '@prisma/client';
+import { buildQuotationPdf } from '@/utils/quotationPdf';
 
 export const quotationCreateSchema = z.object({
   body: z.object({
     customerId: z.string().min(1, 'Customer is required'),
-    siteId: z.string().optional(),
+    siteId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
     title: z.string().min(1, 'Title is required'),
-    description: z.string().optional(),
+    description: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     validityDate: z.string().datetime({ offset: true }),
     subtotal: z.number().min(0),
-    taxAmount: z.number().min(0).optional(),
+    taxAmount: z.number().min(0).optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     totalAmount: z.number().min(0),
-    terms: z.string().optional(),
-    notes: z.string().optional(),
+    terms: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    notes: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     items: z.array(z.object({
       description: z.string().min(1),
       quantity: z.number().int().min(1).default(1),
@@ -33,9 +34,16 @@ export const quotationCreateSchema = z.object({
 export const quotationUpdateSchema = quotationCreateSchema.deepPartial();
 
 async function generateQuotationNumber(): Promise<string> {
-  const count = await prisma.quotation.count();
   const year = new Date().getFullYear();
-  return `QUO-${year}-${String(count + 1).padStart(4, '0')}`;
+  const prefix = `QUO-${year}-`;
+  const quotations = await prisma.quotation.findMany({
+    select: { quotationNumber: true },
+  });
+  const max = quotations.reduce((m, q) => {
+    const n = parseInt((q.quotationNumber || '').replace(prefix, ''), 10);
+    return Number.isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  return `${prefix}${String(max + 1).padStart(4, '0')}`;
 }
 
 export const listQuotations = asyncHandler(async (req: Request, res: Response) => {
@@ -178,4 +186,50 @@ export const deleteQuotation = asyncHandler(async (req: Request, res: Response) 
 
   await prisma.quotation.delete({ where: { id } });
   sendSuccess(res, null, 'Quotation deleted successfully');
+});
+
+export const downloadQuotationPdf = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const quotation = await prisma.quotation.findUnique({
+    where: { id },
+    include: {
+      customer: true,
+      site: { include: { isp: true } },
+      createdBy: { select: { id: true, firstName: true, lastName: true, email: true } },
+      items: { orderBy: { sortOrder: 'asc' } },
+    },
+  });
+
+  if (!quotation) {
+    sendNotFound(res, 'Quotation not found');
+    return;
+  }
+
+  const pdfBuffer = await buildQuotationPdf({
+    quotationNumber: quotation.quotationNumber,
+    title: quotation.title,
+    status: quotation.status,
+    validityDate: quotation.validityDate,
+    description: quotation.description,
+    terms: quotation.terms,
+    subtotal: Number(quotation.subtotal) || 0,
+    taxAmount: Number(quotation.taxAmount) || 0,
+    totalAmount: Number(quotation.totalAmount) || 0,
+    createdAt: quotation.createdAt,
+    customer: quotation.customer,
+    site: quotation.site as any,
+    createdBy: quotation.createdBy,
+    items: quotation.items.map((item) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: Number(item.unitPrice) || 0,
+      totalPrice: Number(item.totalPrice) || 0,
+    })),
+  });
+
+  const fileName = `${quotation.quotationNumber.replace(/[^a-zA-Z0-9-_]/g, '_')}.pdf`;
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.send(pdfBuffer);
 });

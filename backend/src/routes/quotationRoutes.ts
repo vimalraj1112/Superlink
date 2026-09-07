@@ -5,6 +5,7 @@ import {
   createQuotation,
   updateQuotation,
   deleteQuotation,
+  downloadQuotationPdf,
   quotationCreateSchema,
   quotationUpdateSchema,
 } from '@/controllers/quotationController';
@@ -20,6 +21,7 @@ router.use(authenticate);
 
 // List & Get - accessible by SUPER_ADMIN, ISP_OWNER, SALES
 router.get('/', requireRole(UserRole.SUPER_ADMIN, UserRole.ISP_OWNER, UserRole.SALES), listQuotations);
+router.get('/:id/pdf', requireRole(UserRole.SUPER_ADMIN, UserRole.ISP_OWNER, UserRole.SALES), downloadQuotationPdf);
 router.get('/:id', requireRole(UserRole.SUPER_ADMIN, UserRole.ISP_OWNER, UserRole.SALES), getQuotation);
 
 // Create - SUPER_ADMIN, ISP_OWNER, SALES

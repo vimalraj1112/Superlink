@@ -301,19 +301,19 @@ export default function CustomerDetail() {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-brand-50/60 rounded-lg">
                   <p className="text-sm text-gray-600">Contact Person</p>
                   <p className="font-medium text-gray-900">{customer.contactPerson}</p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-brand-50/60 rounded-lg">
                   <p className="text-sm text-gray-600">Email</p>
                   <a href={`mailto:${customer.email}`} className="font-medium text-primary-600 hover:underline">{customer.email}</a>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-brand-50/60 rounded-lg">
                   <p className="text-sm text-gray-600">Phone</p>
                   <a href={`tel:${customer.phone}`} className="font-medium text-primary-600 hover:underline">{customer.phone}</a>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-brand-50/60 rounded-lg">
                   <p className="text-sm text-gray-600">City</p>
                   <p className="font-medium text-gray-900">{customer.city}</p>
                 </div>

@@ -42,7 +42,7 @@ Frontend runs on **http://localhost:5175** (or next available port)
 
 ### 2. Site Management
 - **Sites Page** (`/sites`) - List with status badges, ISP, bandwidth
-- **Site Detail** (`/sites/:id`) - Full details, credentials vault, GIS coordinates
+- **Site Detail** (`/sites/:id`) - Full details, credentials vault
 - **Add/Edit Site** - Modal forms with connection type, pricing
 
 ### 3. ISP Directory
@@ -67,13 +67,7 @@ Frontend runs on **http://localhost:5175** (or next available port)
   - Validation preview before import
   - Execute import with error reporting
 
-### 7. GIS Map (`/gis`)
-- Leaflet map with site markers
-- Color-coded by site status
-- ISP POP locations
-- Popups with customer/site details
-
-### 8. Credentials Vault
+### 7. Credentials Vault
 - Encrypted storage (AES-256-GCM) for router credentials
 - PPPoE credentials
 - Static IP assignments
@@ -96,10 +90,10 @@ Frontend runs on **http://localhost:5175** (or next available port)
 | **SUPER_ADMIN** | Full system access, user/role management, audit logs |
 | **ISP_OWNER** | Complete operational access, all modules |
 | **SALES** | Customers, sites, tickets, quotations |
-| **NOC** | Sites, tickets, GIS, credentials, feasibility |
+| **NOC** | Sites, tickets, credentials, feasibility |
 | **FINANCE** | Payments, customers/sites read, import/export |
 | **SUPPORT** | Tickets, customers/sites read |
-| **CLIENT** | Own sites, tickets, payments, GIS (read-only) |
+| **CLIENT** | Own sites, tickets, payments (read-only) |
 
 ---
 
@@ -147,10 +141,6 @@ Frontend runs on **http://localhost:5175** (or next available port)
 - `POST /api/v1/import-export/import/sites/preview` - Preview import
 - `POST /api/v1/import-export/import/customers` - Execute import
 - `POST /api/v1/import-export/import/sites` - Execute import
-
-### GIS
-- `GET /api/v1/gis/sites` - Sites for map
-- `GET /api/v1/gis/map` - Map data with filters
 
 ### Credentials
 - `GET /api/v1/credentials` - List all

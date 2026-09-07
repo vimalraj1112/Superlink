@@ -6,6 +6,8 @@ import { clsx } from 'clsx';
 import { quotationApi, customerApi, siteApi, roleApi } from '@/api/endpoints';
 import StatusBadge from '@/components/common/StatusBadge';
 import Modal from '@/components/common/Modal';
+import SearchableSelect from '@/components/common/SearchableSelect';
+import { mapFieldErrors } from '@/components/common/fieldErrors';
 import type { Quotation, QuotationItem, Customer, Site } from '@/types/models';
 import { toast } from 'sonner';
 
@@ -69,8 +71,8 @@ export default function QuotationEdit() {
 
   // Load quotation data into form
   useEffect(() => {
-    if (quotationData?.data && !isNew) {
-      const q = quotationData.data;
+    if (quotationData?.data?.data && !isNew) {
+      const q = quotationData.data.data;
       setFormData({
         title: q.title,
         customerId: q.customerId,
@@ -83,7 +85,8 @@ export default function QuotationEdit() {
           id: item.id,
           description: item.description,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
+          // Backend returns Decimal unitPrice as a string - coerce to number
+          unitPrice: Number(item.unitPrice) || 0,
         })) || [{ description: '', quantity: 1, unitPrice: 0 }],
       });
     }
@@ -128,6 +131,9 @@ export default function QuotationEdit() {
       navigate('/quotations');
     },
     onError: (err: any) => {
+      if (err.response?.data?.error?.details) {
+        setErrors(mapFieldErrors(err.response.data.error.details));
+      }
       toast.error(err.response?.data?.message || 'Failed to create quotation');
     },
   });
@@ -142,6 +148,9 @@ export default function QuotationEdit() {
       navigate('/quotations');
     },
     onError: (err: any) => {
+      if (err.response?.data?.error?.details) {
+        setErrors(mapFieldErrors(err.response.data.error.details));
+      }
       toast.error(err.response?.data?.message || 'Failed to update quotation');
     },
   });
@@ -287,39 +296,32 @@ export default function QuotationEdit() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="customerId" className="label">Customer <span className="text-red-500">*</span></label>
-                    <select
-                      id="customerId"
+                    <SearchableSelect
+                      label="Customer"
                       value={formData.customerId}
-                      onChange={e => setFormData(prev => ({ ...prev, customerId: e.target.value, siteId: null }))}
-                      className={clsx('input', errors.customerId && 'border-red-500 focus:border-red-500 focus:ring-red-500')}
-                    >
-                      <option value="">Select a customer</option>
-                      {customers.map((customer: Customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.companyName} ({customer.customerCode})
-                        </option>
-                      ))}
-                    </select>
-                    {errors.customerId && <p className="text-red-500 text-sm mt-1">{errors.customerId}</p>}
+                      onChange={(value) => setFormData(prev => ({ ...prev, customerId: value, siteId: null }))}
+                      options={customers.map((customer: Customer) => ({
+                        value: customer.id,
+                        label: `${customer.companyName} (${customer.customerCode})`,
+                      }))}
+                      placeholder="Select Customer"
+                      error={errors.customerId}
+                      required
+                    />
                   </div>
 
                   <div>
-                    <label htmlFor="siteId" className="label">Site</label>
-                    <select
-                      id="siteId"
+                    <SearchableSelect
+                      label="Site"
                       value={formData.siteId || ''}
-                      onChange={e => setFormData(prev => ({ ...prev, siteId: e.target.value }))}
-                      className="input"
+                      onChange={(value) => setFormData(prev => ({ ...prev, siteId: value || null }))}
+                      options={filteredSites.map((site: Site) => ({
+                        value: site.id,
+                        label: `${site.siteCode} - ${site.installationCity || site.installationAddress}`,
+                      }))}
+                      placeholder="Select a site (optional)"
                       disabled={filteredSites.length === 0}
-                    >
-                      <option value="">Select a site (optional)</option>
-                      {filteredSites.map((site: Site) => (
-                        <option key={site.id} value={site.id}>
-                          {site.siteCode} - {site.installationCity || site.installationAddress}
-                        </option>
-                      ))}
-                    </select>
+                    />
                     {filteredSites.length === 0 && formData.customerId && (
                       <p className="text-gray-500 text-sm mt-1">No sites found for this customer</p>
                     )}

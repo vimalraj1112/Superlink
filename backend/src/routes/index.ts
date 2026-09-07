@@ -8,12 +8,12 @@ import ispRoutes from './ispRoutes';
 import ticketRoutes from './ticketRoutes';
 import paymentRoutes from './paymentRoutes';
 import webhookRoutes from './webhookRoutes';
-import gisRoutes from './gisRoutes';
 import credentialRoutes from './credentialRoutes';
 import userRoutes from './userRoutes';
 import importExportRoutes from './importExportRoutes';
 import quotationRoutes from './quotationRoutes';
 import roleRoutes from './roleRoutes';
+import dashboardRoutes from './dashboardRoutes';
 
 const router = Router();
 
@@ -26,12 +26,12 @@ router.use('/isps', ispRoutes);
 router.use('/tickets', ticketRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/webhooks', webhookRoutes);
-router.use('/gis', gisRoutes);
 router.use('/credentials', credentialRoutes);
 router.use('/users', userRoutes);
 router.use('/import-export', importExportRoutes);
 router.use('/quotations', quotationRoutes);
 router.use('/roles', roleRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 // Health check endpoint
 router.get('/health', (req, res) => {

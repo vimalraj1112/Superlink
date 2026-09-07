@@ -141,7 +141,7 @@ export default function SearchableSelect({
           className={clsx(
             'input flex items-center justify-between cursor-pointer',
             error && 'border-red-500',
-            disabled && 'bg-gray-100 cursor-not-allowed'
+            disabled && 'bg-brand-100/60 cursor-not-allowed'
           )}
           onClick={handleToggle}
         >
@@ -194,7 +194,7 @@ export default function SearchableSelect({
                     onMouseEnter={() => setHighlightedIndex(index)}
                     className={clsx(
                       'w-full px-4 py-2 text-left text-sm',
-                      index === highlightedIndex ? 'bg-primary-50 text-primary-900' : 'text-gray-900 hover:bg-gray-50',
+                      index === highlightedIndex ? 'bg-primary-50 text-primary-900' : 'text-gray-900 hover:bg-brand-50',
                       option.value === value && 'font-medium text-primary-600'
                     )}
                   >

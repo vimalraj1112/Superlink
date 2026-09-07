@@ -13,7 +13,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const { connected } = useSocket();
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
+    <header className="h-16 bg-brand-50/80 backdrop-blur-sm border-b border-brand-100 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
       <div className="flex items-center gap-4 flex-1">
         <button
           onClick={onMenuClick}
@@ -50,7 +50,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
         </button>
 
-        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-gray-200">
+        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-brand-100">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/25">
             <User className="w-5 h-5 text-white" />
           </div>

@@ -205,7 +205,7 @@ export default function TicketDetail() {
                   </div>
                   <div className={clsx(
                     'flex-1 rounded-lg p-3',
-                    message.isInternal ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'
+                    message.isInternal ? 'bg-yellow-50 border border-yellow-200' : 'bg-brand-50/60'
                   )}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm text-gray-900">
@@ -338,7 +338,7 @@ export default function TicketDetail() {
                   'w-full text-left px-4 py-3 rounded-lg border transition-colors',
                   ticket.status === status
                     ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-200 hover:bg-gray-50'
+                    : 'border-gray-200 hover:bg-brand-50'
                 )}
               >
                 <div className="flex items-center justify-between">

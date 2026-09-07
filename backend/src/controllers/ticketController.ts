@@ -23,9 +23,9 @@ export const ticketCreateSchema = z.object({
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT', 'CRITICAL']).optional(),
     source: z.enum(['MANUAL', 'TELEGRAM', 'WHATSAPP', 'EMAIL']).optional(),
     customerId: z.string().min(1, 'Customer is required'),
-    siteId: z.string().optional(),
-    assignedToId: z.string().optional(),
-    slaDueAt: z.string().datetime().optional().nullable(),
+    siteId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    assignedToId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    slaDueAt: z.string().datetime().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
   }),
 });
 
@@ -50,9 +50,16 @@ export const ticketMessageSchema = z.object({
 });
 
 async function generateTicketNumber(): Promise<string> {
-  const count = await prisma.ticket.count();
   const year = new Date().getFullYear();
-  return `TKT-${year}${String(count + 1).padStart(5, '0')}`;
+  const prefix = `TKT-${year}`;
+  const tickets = await prisma.ticket.findMany({
+    select: { ticketNumber: true },
+  });
+  const max = tickets.reduce((m, t) => {
+    const n = parseInt((t.ticketNumber || '').replace(prefix, ''), 10);
+    return Number.isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  return `${prefix}${String(max + 1).padStart(5, '0')}`;
 }
 
 export const listTickets = asyncHandler(async (req: Request, res: Response) => {

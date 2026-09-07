@@ -171,7 +171,7 @@ export default function IspDetail() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-brand-50/60 border-b border-gray-200">
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Site Code</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plan</th>
@@ -183,7 +183,7 @@ export default function IspDetail() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {sites.map(site => (
-                  <tr key={site.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/sites/${site.id}`)}>
+                  <tr key={site.id} className="hover:bg-brand-50 cursor-pointer" onClick={() => navigate(`/sites/${site.id}`)}>
                     <td className="px-6 py-4">
                       <p className="font-medium text-gray-900">{site.siteCode}</p>
                     </td>

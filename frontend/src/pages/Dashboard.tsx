@@ -1,15 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import React from 'react';
 import {
   Users,
   MapPin,
   TicketCheck,
   AlertTriangle,
   Wifi,
+  MessageSquare,
 } from 'lucide-react';
-import { customerApi, siteApi, ticketApi, ispApi } from '@/api/endpoints';
+import { customerApi, siteApi, ticketApi, ispApi, dashboardApi } from '@/api/endpoints';
 import StatusBadge from '@/components/common/StatusBadge';
 import type { Ticket } from '@/types/models';
+import {
+  TicketStatus,
+  TicketStatusLabels,
+} from '@/types/enums';
+import { clsx } from 'clsx';
 
 interface StatCardProps {
   title: string;
@@ -37,6 +44,27 @@ function StatCard({ title, value, icon: Icon, color, link, subtitle }: StatCardP
   );
 }
 
+// Fetch counts for all ticket statuses
+function useTicketStatusCounts() {
+  const statuses = Object.values(TicketStatus);
+
+  const queries = statuses.map(status =>
+    useQuery({
+      queryKey: ['dashboard-ticket-status', status],
+      queryFn: () => ticketApi.list({ limit: 1, status }),
+    })
+  );
+
+  const counts: Record<string, number> = {};
+  statuses.forEach((status, index) => {
+    counts[status] = queries[index]?.data?.data?.meta?.totalItems || 0;
+  });
+
+  const total = statuses.reduce((sum, s) => sum + (counts[s] || 0), 0);
+
+  return { counts, total };
+}
+
 export default function Dashboard() {
   const { data: customersData } = useQuery({
     queryKey: ['dashboard-customers'],
@@ -53,21 +81,43 @@ export default function Dashboard() {
     queryFn: () => ticketApi.list({ limit: 10, sortBy: 'createdAt', sortOrder: 'desc' }),
   });
 
-  const { data: openTicketsData } = useQuery({
-    queryKey: ['dashboard-open-tickets'],
-    queryFn: () => ticketApi.list({ limit: 1, status: 'OPEN' }),
-  });
+  const { counts: ticketStatusCounts, total: totalTickets } = useTicketStatusCounts();
 
   const { data: ispsData } = useQuery({
     queryKey: ['dashboard-isps'],
     queryFn: () => ispApi.list({ limit: 1 }),
   });
 
+  // Renewals due within the next 2 days (includes already-overdue)
+  const { data: renewalsData } = useQuery({
+    queryKey: ['dashboard-renewals'],
+    queryFn: () => dashboardApi.getRenewals(),
+  });
+
+  const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000;
+  const dueRenewals = (renewalsData?.data?.data || []).filter((site: any) => {
+    const due = new Date(site.renewalDate).getTime();
+    return !isNaN(due) && due <= Date.now() + TWO_DAYS_MS;
+  });
+
   const totalCustomers = customersData?.data?.meta?.totalItems || 0;
   const totalSites = sitesData?.data?.meta?.totalItems || 0;
-  const openTickets = openTicketsData?.data?.meta?.totalItems || 0;
   const totalIsps = ispsData?.data?.meta?.totalItems || 0;
   const recentTickets: Ticket[] = ticketsData?.data?.data || [];
+
+  const statusColors: Record<string, string> = {
+    OPEN: 'bg-orange-100 text-orange-700 border-orange-200',
+    IN_PROGRESS: 'bg-blue-100 text-blue-700 border-blue-200',
+    RESOLVED: 'bg-green-100 text-green-700 border-green-200',
+    CLOSED: 'bg-brand-100/60 text-gray-700 border-gray-200',
+  };
+
+  const statusIcons: Record<string, React.ElementType> = {
+    OPEN: AlertTriangle,
+    IN_PROGRESS: TicketCheck,
+    RESOLVED: MessageSquare,
+    CLOSED: MessageSquare,
+  };
 
   return (
     <div className="space-y-6">
@@ -75,6 +125,41 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">Welcome to SuperLink CRM overview</p>
       </div>
+
+      {dueRenewals.length > 0 && (
+        <div className="card border-amber-300 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-amber-900">
+                {dueRenewals.length} renewal{dueRenewals.length > 1 ? 's' : ''} due within 2 days
+              </h2>
+              <ul className="mt-2 space-y-1.5">
+                {dueRenewals.map((site: any) => {
+                  const days = Math.ceil((new Date(site.renewalDate).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                  const daysLabel = days < 0
+                    ? `${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} overdue`
+                    : days === 0
+                      ? 'Due today'
+                      : `Due in ${days} day${days === 1 ? '' : 's'}`;
+                  return (
+                    <li key={site.id}>
+                      <Link to={`/sites/${site.id}`} className="flex items-center justify-between gap-3 text-sm hover:underline">
+                        <span className="text-amber-900 font-medium truncate">
+                          {site.siteCode} — {site.customer?.companyName || '-'}
+                        </span>
+                        <span className={clsx('text-xs font-medium whitespace-nowrap', days < 0 ? 'text-red-600' : 'text-amber-700')}>
+                          {daysLabel}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -94,12 +179,12 @@ export default function Dashboard() {
           subtitle="Customer sites"
         />
         <StatCard
-          title="Open Tickets"
-          value={openTickets}
-          icon={AlertTriangle}
-          color="bg-orange-100 text-orange-600"
-          link="/tickets?status=OPEN"
-          subtitle="Need attention"
+          title="Total Tickets"
+          value={totalTickets}
+          icon={TicketCheck}
+          color="bg-purple-100 text-purple-600"
+          link="/tickets"
+          subtitle="All tickets"
         />
         <StatCard
           title="ISPs"
@@ -109,6 +194,27 @@ export default function Dashboard() {
           link="/isps"
           subtitle="Provider directory"
         />
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Object.values(TicketStatus).map(status => (
+          <button
+            key={status}
+            onClick={() => window.location.href = `/tickets?status=${status}`}
+            className={clsx(
+              'card p-4 text-left hover:shadow-md transition-shadow',
+              statusColors[status] || 'bg-brand-50/60 text-gray-700 border-gray-200'
+            )}
+          >
+            <p className="text-sm text-gray-600">{TicketStatusLabels[status]}</p>
+            <div className="mt-2 flex items-center justify-between">
+              <div className="w-5 h-5 text-gray-400">
+                {React.createElement(statusIcons[status], { className: 'w-5 h-5' })}
+              </div>
+              <span className="text-2xl font-bold text-gray-900">{ticketStatusCounts[status] || 0}</span>
+            </div>
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -127,7 +233,7 @@ export default function Dashboard() {
                 <Link
                   key={ticket.id}
                   to={`/tickets/${ticket.id}`}
-                  className="block p-4 hover:bg-gray-50 transition-colors"
+                  className="block p-4 hover:bg-brand-50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

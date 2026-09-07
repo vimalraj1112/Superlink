@@ -11,9 +11,9 @@ import {
   ChevronRight,
   CreditCard,
   FileText,
-  Map,
   UploadCloud,
   User,
+  Key,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import logo from '@/assets/ChatGPT Image Aug 5, 2026, 11_31_31 AM.png';
@@ -51,18 +51,13 @@ const navigationSections: NavSection[] = [
       { name: 'Tickets', href: '/tickets', icon: TicketCheck, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES', 'NOC', 'FINANCE', 'SUPPORT', 'CLIENT'] },
       { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'FINANCE', 'CLIENT'] },
       { name: 'Quotations', href: '/quotations', icon: FileText, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'SALES'] },
+      { name: 'Credentials', href: '/credentials', icon: Key, roles: ['SUPER_ADMIN', 'ISP_OWNER'] },
     ],
   },
   {
     title: 'Data Management',
     items: [
       { name: 'Import / Export', href: '/import-export', icon: UploadCloud, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'FINANCE'] },
-    ],
-  },
-  {
-    title: 'Analytics & Maps',
-    items: [
-      { name: 'GIS Map', href: '/gis', icon: Map, roles: ['SUPER_ADMIN', 'ISP_OWNER', 'NOC', 'CLIENT'] },
     ],
   },
   {
@@ -99,14 +94,14 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
 
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col h-screen overflow-hidden',
+          'fixed lg:static inset-y-0 left-0 z-50 bg-brand-50/60 border-r border-brand-100 transition-all duration-300 flex flex-col h-screen overflow-hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           sidebarWidth
         )}
         aria-label="Main navigation"
       >
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-brand-100">
           {!collapsed && (
             <Link to="/dashboard" className="btn btn-ghost btn-sm flex items-center gap-3" aria-label="SuperLink Dashboard">
               <img src={logo} alt="SuperLink" className="w-8 h-8 flex-shrink-0" />
@@ -161,8 +156,8 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
                       className={clsx(
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                         isActive
-                          ? 'bg-brand-50 text-brand-700 shadow-sm shadow-brand-500/10'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                          ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/30'
+                          : 'text-gray-700 hover:bg-brand-100 hover:text-brand-900',
                         collapsed && 'justify-center'
                       )}
                       title={collapsed ? item.name : undefined}
@@ -179,7 +174,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-brand-100">
           {!collapsed && (
             <div className="text-xs text-center text-gray-500">
               SuperLink CRM v1.0.0

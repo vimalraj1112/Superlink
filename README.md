@@ -6,10 +6,9 @@ Enterprise-grade ISP Customer Relationship Management and Ticketing System built
 
 ### Core Modules
 - **Customer Management** - Complete CRUD with sites, tickets, payments history
-- **Site Directory** - ISP links, connection types, status lifecycle, GIS coordinates
+- **Site Directory** - ISP links, connection types, status lifecycle
 - **Ticketing System** - Multi-source (Manual/Telegram/WhatsApp), SLA tracking, real-time alerts
 - **Billing & Payments** - OTC, MRC, Static IP, renewals, invoice management
-- **GIS Map** - Leaflet-based site visualization with status color-coding
 - **Credentials Vault** - AES-256-GCM encrypted router/PPPoE credentials
 - **Import/Export** - Excel templates with validation preview
 - **Role-Based Access** - 7 roles with granular permissions
@@ -78,7 +77,7 @@ Superlink/
 | SUPER_ADMIN | All + user/role management, audit logs |
 | ISP_OWNER | All operational modules |
 | SALES | Customers, sites, tickets, quotations |
-| NOC | Sites, tickets, GIS, credentials |
+| NOC | Sites, tickets, credentials |
 | FINANCE | Payments, import/export, read customers/sites |
 | SUPPORT | Tickets, read customers/sites |
 | CLIENT | Own sites/tickets/payments (read) |
@@ -93,7 +92,6 @@ Superlink/
 /api/v1/isps          # ISP directory
 /api/v1/tickets       # Ticket CRUD + messages + assign/status
 /api/v1/payments      # Payment CRUD
-/api/v1/gis           # Map data, site/ISP listings
 /api/v1/credentials   # Encrypted vault
 /api/v1/import-export # Excel import/export
 /api/v1/dashboard     # Stats, renewals, charts

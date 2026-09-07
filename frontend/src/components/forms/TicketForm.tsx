@@ -14,6 +14,8 @@ import {
 } from '@/types/enums';
 import { toast } from 'sonner';
 import Modal from '@/components/common/Modal';
+import SearchableSelect from '@/components/common/SearchableSelect';
+import { mapFieldErrors } from '@/components/common/fieldErrors';
 
 interface TicketFormProps {
   isOpen: boolean;
@@ -130,7 +132,7 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
     onError: (error: any) => {
       if (error.response?.data?.error?.details) {
         const fieldErrors = error.response.data.error.details;
-        setErrors(fieldErrors);
+        setErrors(mapFieldErrors(fieldErrors));
       }
       toast.error(error.response?.data?.message || 'Failed to save ticket');
     },
@@ -151,7 +153,7 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
     onError: (error: any) => {
       if (error.response?.data?.error?.details) {
         const fieldErrors = error.response.data.error.details;
-        setErrors(fieldErrors);
+        setErrors(mapFieldErrors(fieldErrors));
       }
       toast.error(error.response?.data?.message || 'Failed to update ticket');
     },
@@ -223,32 +225,31 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="label">Customer <span className="text-red-500">*</span></label>
-              <select
+              <SearchableSelect
+                label="Customer"
                 value={formData.customerId}
-                onChange={(e) => handleChange('customerId', e.target.value)}
-                className={`input ${errors.customerId ? 'border-red-500' : ''}`}
-              >
-                <option value="">Select Customer</option>
-                {(customersData?.data?.data || []).map((customer: any) => (
-                  <option key={customer.id} value={customer.id}>{customer.companyName}</option>
-                ))}
-              </select>
-              {errors.customerId && <p className="text-sm text-red-500 mt-1">{errors.customerId}</p>}
+                onChange={(value) => handleChange('customerId', value)}
+                options={(customersData?.data?.data || []).map((customer: any) => ({
+                  value: customer.id,
+                  label: customer.companyName,
+                }))}
+                placeholder="Select Customer"
+                error={errors.customerId}
+                required
+              />
             </div>
             <div>
-              <label className="label">Site</label>
-              <select
+              <SearchableSelect
+                label="Site"
                 value={formData.siteId}
-                onChange={(e) => handleChange('siteId', e.target.value)}
-                className="input"
+                onChange={(value) => handleChange('siteId', value)}
+                options={(sitesData?.data?.data || []).map((site: any) => ({
+                  value: site.id,
+                  label: `${site.siteCode} - ${site.planName}`,
+                }))}
+                placeholder="Select Site"
                 disabled={!formData.customerId}
-              >
-                <option value="">Select Site</option>
-                {(sitesData?.data?.data || []).map((site: any) => (
-                  <option key={site.id} value={site.id}>{site.siteCode} - {site.planName}</option>
-                ))}
-              </select>
+              />
             </div>
           </div>
         </div>

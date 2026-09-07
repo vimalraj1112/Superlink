@@ -81,7 +81,7 @@ export default function Quotations() {
       header: 'Status',
       sortable: true,
       render: (row: Quotation) => (
-        <StatusBadge type="custom" value={row.status.toLowerCase()} label={row.status} />
+        <StatusBadge type="custom" value={(row.status || '').toLowerCase()} label={row.status || 'Unknown'} />
       ),
     },
     {
@@ -90,7 +90,7 @@ export default function Quotations() {
       sortable: true,
       className: 'text-right',
       render: (row: Quotation) => (
-        <span className="font-medium text-gray-900">₹{row.totalAmount.toLocaleString('en-IN')}</span>
+        <span className="font-medium text-gray-900">₹{Number(row.totalAmount).toLocaleString('en-IN')}</span>
       ),
     },
     {
@@ -167,7 +167,7 @@ export default function Quotations() {
         </div>
 
         {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row gap-4">
+          <div className="p-4 border-b border-gray-200 bg-brand-50/60 flex flex-col sm:flex-row gap-4">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700">Status:</label>
               <select
@@ -238,7 +238,7 @@ export default function Quotations() {
           pagination={data?.data?.meta ? {
             page: data.data.meta.page,
             limit: data.data.meta.limit,
-            total: data.data.meta.total,
+            total: data.data.meta.totalItems,
             totalPages: data.data.meta.totalPages,
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),

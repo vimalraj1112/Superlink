@@ -15,6 +15,7 @@ export default function QuotationDetail() {
   const queryClient = useQueryClient();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['quotation', id],
@@ -22,7 +23,7 @@ export default function QuotationDetail() {
     enabled: !!id,
   });
 
-  const quotation = data?.data;
+  const quotation = data?.data?.data;
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -61,6 +62,27 @@ export default function QuotationDetail() {
     setDuplicateModalOpen(true);
   };
 
+  const handleDownloadPdf = async () => {
+    if (!quotation) return;
+    setDownloadingPdf(true);
+    try {
+      const response = await quotationApi.downloadPdf(quotation.id);
+      const url = window.URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${quotation.quotationNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Quotation PDF downloaded');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to download PDF');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
   const confirmDuplicate = () => {
     if (!quotation) return;
 
@@ -70,16 +92,17 @@ export default function QuotationDetail() {
       title: `${quotation.title} (Copy)`,
       description: quotation.description,
       validityDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      subtotal: quotation.subtotal,
-      taxAmount: quotation.taxAmount,
-      totalAmount: quotation.totalAmount,
+      // Backend returns Decimal amounts as strings - coerce to numbers for the schema
+      subtotal: Number(quotation.subtotal) || 0,
+      taxAmount: Number(quotation.taxAmount) || 0,
+      totalAmount: Number(quotation.totalAmount) || 0,
       terms: quotation.terms,
       notes: quotation.notes,
       items: quotation.items?.map((item: QuotationItem) => ({
         description: item.description,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice,
+        unitPrice: Number(item.unitPrice) || 0,
+        totalPrice: Number(item.totalPrice) || 0,
         sortOrder: item.sortOrder,
       })) || [],
     };
@@ -140,7 +163,7 @@ export default function QuotationDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <StatusBadge type="custom" value={quotation.status.toLowerCase()} label={quotation.status} />
+          <StatusBadge type="custom" value={(quotation.status || '').toLowerCase()} label={quotation.status || 'Unknown'} />
           <button onClick={() => navigate(`/quotations/${quotation.id}/edit`)} className="btn btn-secondary gap-2">
             <Edit className="w-4 h-4" />
             Edit
@@ -166,7 +189,7 @@ export default function QuotationDetail() {
                 </div>
                 <div>
                   <label className="label text-gray-500">Status</label>
-                  <StatusBadge type="custom" value={quotation.status.toLowerCase()} label={quotation.status} />
+                  <StatusBadge type="custom" value={(quotation.status || '').toLowerCase()} label={quotation.status || 'Unknown'} />
                 </div>
                 <div>
                   <label className="label text-gray-500">Customer</label>
@@ -206,7 +229,7 @@ export default function QuotationDetail() {
           {/* Items */}
           <div className="card">
             <div className="card-header">
-              <h3 className="text-lg font-semibold text-gray-900">Items ({quotation._count?.items || 0})</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Items ({quotation.items?.length || 0})</h3>
             </div>
             <div className="card-body">
               {quotation.items && quotation.items.length > 0 ? (
@@ -227,8 +250,8 @@ export default function QuotationDetail() {
                           <td className="font-medium">{index + 1}</td>
                           <td>{item.description}</td>
                           <td className="text-right">{item.quantity}</td>
-                          <td className="text-right">₹{item.unitPrice.toLocaleString('en-IN')}</td>
-                          <td className="text-right font-medium">₹{item.totalPrice.toLocaleString('en-IN')}</td>
+                          <td className="text-right">₹{Number(item.unitPrice).toLocaleString('en-IN')}</td>
+                          <td className="text-right font-medium">₹{Number(item.totalPrice).toLocaleString('en-IN')}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -245,9 +268,9 @@ export default function QuotationDetail() {
                   <p className="text-xl font-bold text-gray-900">Total</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-gray-900">₹{quotation.subtotal.toLocaleString('en-IN')}</p>
-                  <p className="text-gray-900">₹{quotation.taxAmount.toLocaleString('en-IN')}</p>
-                  <p className="text-xl font-bold text-brand-600">₹{quotation.totalAmount.toLocaleString('en-IN')}</p>
+                  <p className="text-gray-900">₹{Number(quotation.subtotal).toLocaleString('en-IN')}</p>
+                  <p className="text-gray-900">₹{Number(quotation.taxAmount).toLocaleString('en-IN')}</p>
+                  <p className="text-xl font-bold text-brand-600">₹{Number(quotation.totalAmount).toLocaleString('en-IN')}</p>
                 </div>
               </div>
             </div>
@@ -262,13 +285,9 @@ export default function QuotationDetail() {
               <Edit className="w-4 h-4" />
               Edit Quotation
             </button>
-            <button className="btn btn-primary w-full gap-2" onClick={() => navigate(`/quotations/${quotation.id}/edit`)}>
-              <Edit className="w-4 h-4" />
-              Edit Quotation
-            </button>
-            <button className="btn btn-secondary w-full gap-2" onClick={() => toast.info('PDF generation coming soon')}>
+            <button className="btn btn-secondary w-full gap-2" onClick={handleDownloadPdf} disabled={downloadingPdf}>
               <Download className="w-4 h-4" />
-              Download PDF
+              {downloadingPdf ? 'Preparing PDF...' : 'Download PDF'}
             </button>
             <button className="btn btn-outline w-full gap-2" onClick={handleDuplicate} disabled={duplicateMutation.isPending}>
               <FileText className="w-4 h-4" />

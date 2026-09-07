@@ -32,7 +32,7 @@ const paymentTypeColors: Record<string, string> = {
   OTC: 'bg-blue-100 text-blue-800',
   MRC: 'bg-green-100 text-green-800',
   STATIC_IP: 'bg-purple-100 text-purple-800',
-  OTHER: 'bg-gray-100 text-gray-800',
+  OTHER: 'bg-brand-100/60 text-gray-800',
 };
 
 export default function PaymentDetail() {
@@ -111,7 +111,7 @@ export default function PaymentDetail() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <span className={clsx('badge', paymentTypeColors[payment.type] || 'bg-gray-100 text-gray-800')}>
+              <span className={clsx('badge', paymentTypeColors[payment.type] || 'bg-brand-100/60 text-gray-800')}>
                 {paymentTypeLabels[payment.type] || payment.type}
               </span>
             </div>
@@ -121,21 +121,21 @@ export default function PaymentDetail() {
         <div className="p-6 space-y-6">
           {/* Basic Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-brand-50/60 rounded-lg">
               <p className="text-sm text-gray-600">Payment Number</p>
               <p className="font-mono text-lg font-medium text-gray-900">{payment.paymentNumber}</p>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-brand-50/60 rounded-lg">
               <p className="text-sm text-gray-600">Amount</p>
               <p className="font-mono text-lg font-medium text-primary-600">₹{Number(payment.amount).toLocaleString()}</p>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-brand-50/60 rounded-lg">
               <p className="text-sm text-gray-600">Payment Date</p>
               <p className="font-medium text-gray-900">{new Date(payment.paymentDate).toLocaleDateString()}</p>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-brand-50/60 rounded-lg">
               <p className="text-sm text-gray-600">Type</p>
-              <span className={clsx('badge', paymentTypeColors[payment.type] || 'bg-gray-100 text-gray-800')}>
+              <span className={clsx('badge', paymentTypeColors[payment.type] || 'bg-brand-100/60 text-gray-800')}>
                 {paymentTypeLabels[payment.type] || payment.type}
               </span>
             </div>

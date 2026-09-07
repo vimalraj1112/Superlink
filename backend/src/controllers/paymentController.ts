@@ -11,30 +11,37 @@ import { PaymentType } from '@prisma/client';
 export const paymentCreateSchema = z.object({
   body: z.object({
     customerId: z.string().min(1, 'Customer is required'),
-    siteId: z.string().optional().nullable(),
+    siteId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
     amount: z.number().positive('Amount must be positive'),
     type: z.enum(['OTC', 'MRC', 'STATIC_IP', 'OTHER']),
-    description: z.string().optional(),
+    description: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     paymentDate: z.string().refine((val) => {
       const parsed = Date.parse(val);
       return !isNaN(parsed);
     }, {
       message: 'Invalid date format. Use YYYY-MM-DD or ISO 8601 format.',
-    }).optional(),
-    paymentMethod: z.string().optional(),
-    transactionId: z.string().optional(),
-    referenceNumber: z.string().optional(),
-    invoiceNumber: z.string().optional(),
-    notes: z.string().optional(),
+    }).optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    paymentMethod: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    transactionId: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    referenceNumber: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    invoiceNumber: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    notes: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
   }),
 });
 
 export const paymentUpdateSchema = paymentCreateSchema.deepPartial();
 
 async function generatePaymentNumber(): Promise<string> {
-  const count = await prisma.payment.count();
   const year = new Date().getFullYear();
-  return `PAY-${year}${String(count + 1).padStart(5, '0')}`;
+  const prefix = `PAY-${year}`;
+  const payments = await prisma.payment.findMany({
+    select: { paymentNumber: true },
+  });
+  const max = payments.reduce((m, p) => {
+    const n = parseInt((p.paymentNumber || '').replace(prefix, ''), 10);
+    return Number.isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  return `${prefix}${String(max + 1).padStart(5, '0')}`;
 }
 
 export const listPayments = asyncHandler(async (req: Request, res: Response) => {

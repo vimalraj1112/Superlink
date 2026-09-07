@@ -8,11 +8,13 @@ import { customerApi, siteApi, paymentApi } from '@/api/endpoints';
 import type { Customer, Site, Payment } from '@/types/models';
 import { PaymentType } from '@/types/enums';
 import { toast } from 'sonner';
+import SearchableSelect from '@/components/common/SearchableSelect';
+import { mapFieldErrors } from '@/components/common/fieldErrors';
 
 interface FormData {
   customerId: string;
   siteId: string | undefined;
-  amount: string;
+  amount: number;
   type: PaymentType;
   description: string;
   paymentDate: string;
@@ -26,7 +28,7 @@ interface FormData {
 const initialFormData: FormData = {
   customerId: '',
   siteId: undefined,
-  amount: '',
+  amount: 0,
   type: PaymentType.MRC,
   description: '',
   paymentDate: new Date().toISOString().split('T')[0],
@@ -80,7 +82,7 @@ export default function PaymentForm() {
       setFormData({
         customerId: payment.customerId,
         siteId: payment.siteId || '',
-        amount: String(payment.amount),
+        amount: Number(payment.amount),
         type: payment.type,
         description: payment.description || '',
         paymentDate: payment.paymentDate.split('T')[0],
@@ -100,10 +102,8 @@ export default function PaymentForm() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.customerId) newErrors.customerId = 'Customer is required';
-    if (!formData.amount || formData.amount === '') {
-      newErrors.amount = 'Amount is required';
-    } else if (Number(formData.amount) <= 0) {
-      newErrors.amount = 'Amount must be greater than 0';
+    if (formData.amount === undefined || formData.amount === null || formData.amount <= 0) {
+      newErrors.amount = 'Amount is required and must be greater than 0';
     }
     if (!formData.type) newErrors.type = 'Type is required';
     if (!formData.paymentDate) newErrors.paymentDate = 'Payment date is required';
@@ -126,7 +126,7 @@ export default function PaymentForm() {
     onError: (err: any) => {
       if (err.response?.data?.error?.details) {
         const fieldErrors = err.response.data.error.details;
-        setErrors(fieldErrors);
+        setErrors(mapFieldErrors(fieldErrors));
       }
       const message = err.response?.data?.message || (isEditing ? 'Failed to update payment' : 'Failed to create payment');
       toast.error(message);
@@ -155,7 +155,11 @@ export default function PaymentForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'amount') {
+      setFormData(prev => ({ ...prev, [name]: value ? parseFloat(value) : 0 }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     if (name === 'customerId') {
       setSelectedCustomer(null);
@@ -253,7 +257,7 @@ export default function PaymentForm() {
                             setFormData(prev => ({ ...prev, customerId: customer.id }));
                             setShowCustomerSearch(false);
                           }}
-                          className="w-full p-4 text-left hover:bg-gray-50 transition-colors"
+                          className="w-full p-4 text-left hover:bg-brand-50 transition-colors"
                         >
                           <p className="font-medium text-gray-900">{customer.companyName}</p>
                           <p className="text-sm text-gray-500">{customer.customerCode} • {customer.contactPerson} • {customer.city}</p>
@@ -292,35 +296,30 @@ export default function PaymentForm() {
 
         {/* Site Selection */}
         <div className="space-y-2">
-          <label className="label">Site (Optional)</label>
-          <div className="relative">
-            {formData.customerId ? (
-              <>
-                <select
-                  name="siteId"
-                  value={formData.siteId}
-                  onChange={handleChange}
-                  className="input"
-                >
-                  <option value="">Select a site (optional)</option>
-                  {sitesData?.data?.data.map((site: Site) => (
-                    <option key={site.id} value={site.id}>
-                      {site.siteCode} - {site.planName}
-                    </option>
-                  ))}
-                </select>
-                {sitesLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-primary-600" />}
-              </>
-            ) : (
+          {formData.customerId ? (
+            <SearchableSelect
+              label="Site (Optional)"
+              value={formData.siteId || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, siteId: value || undefined }))}
+              options={(sitesData?.data?.data || []).map((site: Site) => ({
+                value: site.id,
+                label: `${site.siteCode} - ${site.planName}`,
+              }))}
+              placeholder="Select a site (optional)"
+              disabled={!!sitesLoading}
+            />
+          ) : (
+            <div>
+              <label className="label">Site (Optional)</label>
               <input
                 type="text"
                 value=""
                 readOnly
-                className="input bg-gray-100 cursor-not-allowed"
+                className="input bg-brand-100/60 cursor-not-allowed"
                 placeholder="Select a customer first"
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Amount & Type */}

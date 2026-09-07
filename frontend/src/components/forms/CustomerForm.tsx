@@ -6,6 +6,7 @@ import { customerApi } from '@/api/endpoints';
 import type { Customer } from '@/types/models';
 import { toast } from 'sonner';
 import Modal from '@/components/common/Modal';
+import { mapFieldErrors } from '@/components/common/fieldErrors';
 
 interface CustomerFormProps {
   isOpen: boolean;
@@ -19,7 +20,26 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
   const { id } = useParams<{ id: string }>();
   const isEditing = !!initialData;
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    customerCode?: string;
+    companyName: string;
+    contactPerson: string;
+    email: string;
+    phone: string;
+    alternatePhone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    gstNumber: string;
+    panNumber: string;
+    billingAddress: string;
+    billingCity: string;
+    billingState: string;
+    billingPincode: string;
+    notes: string;
+    isActive: boolean;
+  }>({
     customerCode: '',
     companyName: '',
     contactPerson: '',
@@ -103,7 +123,7 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
     const newErrors: Record<string, string> = {};
 
     // Customer code is auto-generated on create, only validate on edit
-    if (isEditing && !formData.customerCode.trim()) newErrors.customerCode = 'Customer code is required';
+    if (isEditing && (!formData.customerCode || !formData.customerCode.trim())) newErrors.customerCode = 'Customer code is required';
     if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
     if (!formData.contactPerson.trim()) newErrors.contactPerson = 'Contact person is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
@@ -168,7 +188,7 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
     onError: (error: any) => {
       if (error.response?.data?.error?.details) {
         const fieldErrors = error.response.data.error.details;
-        setErrors(fieldErrors);
+        setErrors(mapFieldErrors(fieldErrors));
       }
       toast.error(error.response?.data?.message || 'Failed to save customer');
     },
@@ -189,7 +209,7 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
     onError: (error: any) => {
       if (error.response?.data?.error?.details) {
         const fieldErrors = error.response.data.error.details;
-        setErrors(fieldErrors);
+        setErrors(mapFieldErrors(fieldErrors));
       }
       toast.error(error.response?.data?.message || 'Failed to update customer');
     },
@@ -200,9 +220,9 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
     if (!validateForm()) return;
 
     const submitData = { ...formData };
+    // Remove empty customerCode for auto-generation on create
     if (!submitData.customerCode) {
-      const { customerCode, ...rest } = submitData;
-      Object.assign(submitData, rest);
+      delete submitData.customerCode;
     }
 
     if (isEditing && id) {
@@ -233,7 +253,7 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
                 <input
                   type="text"
                   value="Auto-generated"
-                  className="input bg-gray-50"
+                  className="input bg-brand-50/60"
                   disabled
                 />
               </div>

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Loader2, MapPin, Building2, Wifi, DollarSign, Calendar, Hash, Settings } from 'lucide-react';
+import { X, Loader2, MapPin, Building2, Wifi, DollarSign, Calendar, Hash } from 'lucide-react';
 import { siteApi, customerApi, ispApi } from '@/api/endpoints';
 import type { Site } from '@/types/models';
 import { SiteStatus, SiteStatusLabels, ConnectionType, ConnectionTypeLabels } from '@/types/enums';
 import { toast } from 'sonner';
 import Modal from '@/components/common/Modal';
-import CoordinatePicker from '@/components/map/CoordinatePicker';
+import { mapFieldErrors } from '@/components/common/fieldErrors';
 import SearchableSelect from '@/components/common/SearchableSelect';
 
 interface SiteFormProps {
@@ -38,8 +38,6 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     installationCity: '',
     installationState: '',
     installationPincode: '',
-    latitude: '',
-    longitude: '',
     connectionType: '',
     circuitId: '',
     provisionedAt: '',
@@ -68,8 +66,6 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
         installationCity: initialData.installationCity || '',
         installationState: initialData.installationState || '',
         installationPincode: initialData.installationPincode || '',
-        latitude: initialData.latitude?.toString() || '',
-        longitude: initialData.longitude?.toString() || '',
         connectionType: initialData.connectionType || '',
         circuitId: initialData.circuitId || '',
         provisionedAt: initialData.provisionedAt ? new Date(initialData.provisionedAt).toISOString().split('T')[0] : '',
@@ -93,8 +89,6 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
         installationCity: '',
         installationState: '',
         installationPincode: '',
-        latitude: '',
-        longitude: '',
         connectionType: '',
         circuitId: '',
         provisionedAt: '',
@@ -171,14 +165,6 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
-  const handleCoordinateSelect = (lat: number, lng: number) => {
-    setFormData(prev => ({
-      ...prev,
-      latitude: lat.toString(),
-      longitude: lng.toString(),
-    }));
-  };
-
   const createMutation = useMutation({
     mutationFn: (data: typeof formData) => siteApi.create(data),
     onSuccess: (response) => {
@@ -196,7 +182,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     onError: (error: any) => {
       if (error.response?.data?.error?.details) {
         const fieldErrors = error.response.data.error.details;
-        setErrors(fieldErrors);
+        setErrors(mapFieldErrors(fieldErrors));
       }
       toast.error(error.response?.data?.message || 'Failed to save site');
     },
@@ -217,7 +203,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     onError: (error: any) => {
       if (error.response?.data?.error?.details) {
         const fieldErrors = error.response.data.error.details;
-        setErrors(fieldErrors);
+        setErrors(mapFieldErrors(fieldErrors));
       }
       toast.error(error.response?.data?.message || 'Failed to update site');
     },
@@ -251,9 +237,10 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     if (submitData.provisionedAt) submitData.provisionedAt = new Date(submitData.provisionedAt).toISOString();
     if (submitData.renewalDate) submitData.renewalDate = new Date(submitData.renewalDate).toISOString();
 
-    // Convert coordinates
-    if (submitData.latitude) submitData.latitude = parseFloat(submitData.latitude);
-    if (submitData.longitude) submitData.longitude = parseFloat(submitData.longitude);
+    // Omit empty optional string fields so they don't get persisted as blanks
+    ['connectionType', 'circuitId', 'notes', 'renewalDate', 'provisionedAt'].forEach(field => {
+      if (!submitData[field]) delete submitData[field];
+    });
 
     // Remove empty siteCode for auto-generation on create
     if (!submitData.siteCode) delete submitData.siteCode;
@@ -285,7 +272,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
                 <input
                   type="text"
                   value="Auto-generated"
-                  className="input bg-gray-50"
+                  className="input bg-brand-50/60"
                   disabled
                 />
               </div>
@@ -523,19 +510,6 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
               {errors.installationPincode && <p className="text-sm text-red-500 mt-1">{errors.installationPincode}</p>}
             </div>
           </div>
-        </div>
-
-        {/* Coordinates Section */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-primary-600" />
-            Map Coordinates
-          </h3>
-          <CoordinatePicker
-            latitude={formData.latitude ? parseFloat(formData.latitude) : undefined}
-            longitude={formData.longitude ? parseFloat(formData.longitude) : undefined}
-            onSelect={handleCoordinateSelect}
-          />
         </div>
 
         {/* Dates Section */}

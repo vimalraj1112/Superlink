@@ -125,33 +125,6 @@ export const webhookApi = {
   getTelegramInfo: () => api.get('/webhooks/telegram/info'),
 };
 
-export const gisApi = {
-  listSites: (params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    status?: string;
-    ispId?: string;
-    connectionType?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }) => api.get('/gis/sites', { params }),
-  getSite: (id: string) => api.get(`/gis/sites/${id}`),
-  listIsps: (params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }) => api.get('/gis/isps', { params }),
-  getIsp: (id: string) => api.get(`/gis/isps/${id}`),
-  getMapData: (params?: {
-    status?: string;
-    ispId?: string;
-  }) => api.get('/gis/map', { params }),
-  getSiteStats: () => api.get('/gis/sites/stats'),
-};
-
 export const credentialsApi = {
   listAll: (params?: {
     page?: number;
@@ -231,4 +204,6 @@ export const quotationApi = {
   create: (data: any) => api.post('/quotations', data),
   update: (id: string, data: any) => api.patch(`/quotations/${id}`, data),
   delete: (id: string) => api.delete(`/quotations/${id}`),
+  downloadPdf: (id: string) =>
+    api.get(`/quotations/${id}/pdf`, { responseType: 'blob' }) as Promise<{ data: Blob }>,
 };

@@ -10,34 +10,40 @@ import { SiteStatus } from '@prisma/client';
 
 export const siteCreateSchema = z.object({
   body: z.object({
-    siteCode: z.string().min(1).optional(),
+    siteCode: z.string().min(1).optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     customerId: z.string().min(1, 'Customer is required'),
     ispId: z.string().min(1, 'ISP is required'),
     planName: z.string().min(1),
     bandwidth: z.string().min(1),
     mrc: z.number().positive(),
     otc: z.number().nonnegative(),
-    staticIpCharge: z.number().nonnegative().optional(),
-    staticIpCount: z.number().int().nonnegative().optional(),
-    otherCharges: z.number().nonnegative().optional(),
+    staticIpCharge: z.number().nonnegative().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    staticIpCount: z.number().int().nonnegative().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    otherCharges: z.number().nonnegative().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     installationAddress: z.string().min(1),
     installationCity: z.string().min(1),
     installationState: z.string().min(1),
     installationPincode: z.string().min(3),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
-    connectionType: z.string().optional(),
-    circuitId: z.string().optional(),
-    renewalDate: z.string().datetime().optional().nullable(),
-    notes: z.string().optional(),
+    latitude: z.number().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    longitude: z.number().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    connectionType: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    circuitId: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    renewalDate: z.string().datetime().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    notes: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
   }),
 });
 
 export const siteUpdateSchema = siteCreateSchema.deepPartial();
 
 async function generateSiteCode(): Promise<string> {
-  const count = await prisma.site.count();
-  return `SITE-${String(count + 1).padStart(5, '0')}`;
+  const sites = await prisma.site.findMany({
+    select: { siteCode: true },
+  });
+  const max = sites.reduce((m, s) => {
+    const n = parseInt((s.siteCode || '').replace('SITE-', ''), 10);
+    return Number.isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  return `SITE-${String(max + 1).padStart(5, '0')}`;
 }
 
 export const listSites = asyncHandler(async (req: Request, res: Response) => {

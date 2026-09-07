@@ -176,7 +176,7 @@ export default function Customers() {
         </div>
 
         {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row gap-4">
+          <div className="p-4 border-b border-gray-200 bg-brand-50/60 flex flex-col sm:flex-row gap-4">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700">Status:</label>
               <select

@@ -50,7 +50,6 @@ async function main() {
         tickets: ['create', 'read', 'update', 'delete', 'assign'],
         payments: ['create', 'read', 'update', 'delete'],
         dashboard: ['read'],
-        gis: ['read'],
         importExport: ['create', 'read', 'update', 'delete'],
         settings: ['read', 'update'],
         auditLogs: ['read'],
@@ -68,7 +67,6 @@ async function main() {
         tickets: ['create', 'read', 'update', 'assign'],
         payments: ['create', 'read', 'update', 'delete'],
         dashboard: ['read'],
-        gis: ['read'],
         importExport: ['create', 'read', 'update', 'delete'],
         settings: ['read', 'update'],
         credentials: ['create', 'read', 'update', 'delete', 'reveal'],
@@ -88,13 +86,12 @@ async function main() {
     },
     {
       name: UserRole.NOC,
-      description: 'Feasibility surveys, GIS coordinates mapping, technical provisioning, credential management, speed tests',
+      description: 'Feasibility surveys, technical provisioning, credential management, speed tests',
       permissions: {
         customers: ['read'],
         sites: ['create', 'read', 'update'],
         isps: ['read'],
         tickets: ['create', 'read', 'update'],
-        gis: ['read'],
         credentials: ['create', 'read', 'update', 'reveal'],
         dashboard: ['read'],
       },
@@ -124,12 +121,11 @@ async function main() {
     },
     {
       name: UserRole.CLIENT,
-      description: 'Read-only access to customer\'s own sites, GIS link map, billing statements, and ticket tracking',
+      description: 'Read-only access to customer\'s own sites, billing statements, and ticket tracking',
       permissions: {
         sites: ['read'],
         tickets: ['create', 'read'],
         payments: ['read'],
-        gis: ['read'],
       },
     },
   ];

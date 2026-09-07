@@ -9,7 +9,7 @@ import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
 
 export const customerCreateSchema = z.object({
   body: z.object({
-    customerCode: z.string().min(1).optional(),
+    customerCode: z.string().min(1).optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     companyName: z.string().min(1),
     contactPerson: z.string().min(1),
     email: z.string().email(),
@@ -33,8 +33,14 @@ export const customerCreateSchema = z.object({
 export const customerUpdateSchema = customerCreateSchema.deepPartial();
 
 async function generateCustomerCode(): Promise<string> {
-  const count = await prisma.customer.count();
-  return `CUST-${String(count + 1).padStart(5, '0')}`;
+  const customers = await prisma.customer.findMany({
+    select: { customerCode: true },
+  });
+  const max = customers.reduce((m, c) => {
+    const n = parseInt((c.customerCode || '').replace('CUST-', ''), 10);
+    return Number.isNaN(n) ? m : Math.max(m, n);
+  }, 0);
+  return `CUST-${String(max + 1).padStart(5, '0')}`;
 }
 
 export const listCustomers = asyncHandler(async (req: Request, res: Response) => {

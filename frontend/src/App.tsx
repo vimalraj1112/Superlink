@@ -16,7 +16,6 @@ import TicketDetail from './pages/TicketDetail';
 import Payments from './pages/Payments';
 import PaymentDetail from './pages/PaymentDetail';
 import PaymentForm from './pages/PaymentForm';
-import GisMap from './pages/GisMap';
 import Settings from './pages/Settings';
 import ImportExport from './pages/ImportExport';
 import Profile from './pages/Profile';
@@ -24,6 +23,7 @@ import Users from './pages/Users';
 import Quotations from './pages/Quotations';
 import QuotationDetail from './pages/QuotationDetail';
 import QuotationEdit from './pages/QuotationEdit';
+import Credentials from './pages/Credentials';
 import Layout from './components/layout/Layout';
 import './index.css';
 
@@ -77,7 +77,6 @@ function PrivateRoutes() {
         <Route path="payments/:id" element={<PaymentDetail />} />
         <Route path="payments/new" element={<PaymentForm />} />
         <Route path="payments/:id/edit" element={<PaymentForm />} />
-        <Route path="gis" element={<GisMap />} />
         <Route path="settings" element={<Settings />} />
         <Route path="import-export" element={<ImportExport />} />
         <Route path="profile" element={<Profile />} />
@@ -86,6 +85,7 @@ function PrivateRoutes() {
         <Route path="quotations/new" element={<QuotationEdit />} />
         <Route path="quotations/:id" element={<QuotationDetail />} />
         <Route path="quotations/:id/edit" element={<QuotationEdit />} />
+        <Route path="credentials" element={<Credentials />} />
       </Route>
     </Routes>
   );

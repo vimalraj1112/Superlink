@@ -17,6 +17,25 @@ interface Role {
   permissions: Record<string, string[]>;
 }
 
+// Friendly labels for permission resource keys, used in the role access catalog
+const MODULE_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  customers: 'Customers',
+  sites: 'Sites',
+  isps: 'ISPs',
+  tickets: 'Tickets',
+  payments: 'Payments',
+  quotations: 'Quotations',
+  users: 'Users',
+  roles: 'Roles',
+  settings: 'Settings',
+  credentials: 'Credentials',
+  importExport: 'Import/Export',
+  auditLogs: 'Audit Logs',
+  notifications: 'Notifications',
+  profile: 'Profile',
+};
+
 export default function Users() {
   const { hasRole } = useAuth();
   const queryClient = useQueryClient();
@@ -231,7 +250,7 @@ export default function Users() {
         </div>
 
         {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-gray-50 flex flex-col sm:flex-row gap-4 flex-wrap">
+          <div className="p-4 border-b border-gray-200 bg-brand-50/60 flex flex-col sm:flex-row gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700">Role:</label>
               <select
@@ -304,7 +323,7 @@ export default function Users() {
           pagination={data?.data?.meta ? {
             page: data.data.meta.page,
             limit: data.data.meta.limit,
-            total: data.data.meta.total,
+            total: data.data.meta.totalItems,
             totalPages: data.data.meta.totalPages,
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),
@@ -435,6 +454,54 @@ function UserForm({ editingUser, roles, onSubmit, onCancel, isSubmitting }: User
           </select>
           {errors.roleId && <p className="text-xs text-red-500 mt-1">{errors.roleId}</p>}
         </div>
+
+        {/* Role Access Catalog */}
+        <div className="md:col-span-2">
+          <div className="bg-brand-50/60 border border-gray-200 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-brand-600" />
+                Role Access Reference
+              </h4>
+              <span className="text-xs text-gray-500">{roles.length} roles · click a card to select</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+              {roles.map(role => {
+                const modules = Object.entries(role.permissions || {})
+                  .filter(([, actions]) => actions && actions.length > 0)
+                  .map(([key]) => MODULE_LABELS[key] || key)
+                  .sort();
+                const isSelected = formData.roleId === role.id;
+                return (
+                  <button
+                    key={role.id}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, roleId: role.id }))}
+                    className={clsx(
+                      'text-left p-3 rounded-md border transition-colors',
+                      isSelected
+                        ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500'
+                        : 'border-gray-200 bg-white hover:border-brand-300'
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-gray-900">{role.name}</span>
+                      {isSelected && <span className="text-xs font-medium text-brand-700">Selected</span>}
+                    </div>
+                    {role.description && (
+                      <p className="text-xs text-gray-500 mt-1">{role.description}</p>
+                    )}
+                    <p className="text-xs text-gray-600 mt-1.5">
+                      <span className="font-medium text-gray-700">Access: </span>
+                      {modules.length > 0 ? modules.join(', ') : 'No modules'}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="label">First Name</label>
           <input

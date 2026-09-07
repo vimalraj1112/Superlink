@@ -200,7 +200,7 @@ export default function Tickets() {
     },
   ];
 
-  const totalTickets = data?.data?.meta?.total || 0;
+  const totalTickets = data?.data?.meta?.totalItems || 0;
   const openCount = status === TicketStatus.OPEN ? totalTickets : undefined;
 
   return (
@@ -265,7 +265,7 @@ export default function Tickets() {
         </div>
 
         {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 border-b border-gray-200 bg-brand-50/60 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <select value={status} onChange={e => { setStatus(e.target.value); setPage(1); }} className="input text-sm">
               <option value="">All Statuses</option>
               {Object.values(TicketStatus).map(value => (
@@ -335,7 +335,7 @@ export default function Tickets() {
           pagination={data?.data?.meta ? {
             page: data.data.meta.page,
             limit: data.data.meta.limit,
-            total: data.data.meta.total,
+            total: data.data.meta.totalItems,
             totalPages: data.data.meta.totalPages,
             onPageChange: (p: number) => setPage(p),
             onLimitChange: (l: number) => setLimit(l),
