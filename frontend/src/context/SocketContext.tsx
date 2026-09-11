@@ -46,6 +46,17 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       timeout: 10000,
     });
 
+    // Re-read the latest access token and point the socket at it, so the next
+    // automatic attempt uses a fresh token. The API layer rotates this token on
+    // 401 via axios.ts, so realtime recovers the moment a new token is written
+    // to localStorage — instead of retrying forever with a stale one.
+    const refreshSocketAuth = () => {
+      const latestToken = localStorage.getItem('accessToken');
+      if (latestToken) {
+        newSocket.auth = { token: latestToken };
+      }
+    };
+
     newSocket.on('connect', () => {
       setConnected(true);
       setRetryCount(0);
@@ -62,18 +73,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     newSocket.on('connect_error', (error) => {
       setConnected(false);
-      // Keep trying automatically; surface that we're reconnecting so UI can
-      // tell the user realtime is temporarily unavailable instead of silently
-      // failing. Treat HTTP 429 (rate-limited) as "wait and back off."
+      // Surface that we're reconnecting so UI can tell the user realtime is
+      // temporarily unavailable instead of silently failing.
       setRetryCount((count) => count + 1);
-      if ((error as any)?.description === 429 || (error as any)?.message?.includes('429')) {
-        // Rate-limited: the backend is telling us to hold off. Slow down by
-        // forcing a longer delay before the next automatic attempt.
-        newSocket.io.opts.reconnectionDelay = Math.max(
-          newSocket.io.opts.reconnectionDelay,
-          5000
-        );
-      }
+      // Stale/expired access token is the common cause here — refresh it so the
+      // next attempt authenticates. (The 429 rate-limit case also lands here and
+      // is handled the same way: keep trying but with the current token.)
+      refreshSocketAuth();
     });
 
     newSocket.on('auth:success', () => {
@@ -81,7 +87,9 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on('auth:error', (error) => {
-      console.error('Socket auth error:', error);
+      // Backend explicitly rejected the token — re-read the latest one and retry.
+      refreshSocketAuth();
+      newSocket.connect();
     });
 
     socketRef.current = newSocket;
