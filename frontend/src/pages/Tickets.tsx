@@ -302,8 +302,22 @@ export default function Tickets() {
               <option value="priority">Priority</option>
               <option value="status">Status</option>
             </select>
-            <button onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')} className="btn btn-secondary px-3">
-              {sortOrder === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            <button
+              onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="btn btn-secondary px-3 text-sm flex items-center gap-1"
+              title="Toggle sort order"
+            >
+              {sortOrder === 'asc' ? (
+                <>
+                  <ChevronUp className="w-4 h-4" />
+                  <span>Asc</span>
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  <span>Desc</span>
+                </>
+              )}
             </button>
             <button
               onClick={() => {
