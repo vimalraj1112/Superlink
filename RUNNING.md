@@ -29,7 +29,7 @@ Frontend runs on **http://localhost:5175** (or next available port)
 
 ### Default Login
 - **Email:** admin@superlinkit.com
-- **Password:** SuperLink@2024!
+- **Password:** set via the `SUPERLINK_ADMIN_PASSWORD` environment variable (see `backend/.env.example`)
 
 ---
 

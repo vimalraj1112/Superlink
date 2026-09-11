@@ -16,6 +16,10 @@ import {
   MessageSquare,
   X,
   Shield,
+  Building2,
+  PhoneCall,
+  AtSign,
+  Wifi,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { ticketApi } from '@/api/endpoints';
@@ -274,7 +278,42 @@ export default function TicketDetail() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Details</h2>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <User className="w-5 h-5 text-gray-400" />
+                <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-600">Address</p>
+                  <p className="font-medium text-gray-900">
+                    {ticket.customer?.address
+                      ? [ticket.customer.address, ticket.customer.city, ticket.customer.state, ticket.customer.pincode].filter(Boolean).join(', ')
+                      : ticket.site?.installationAddress || '-'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-600">ISP</p>
+                  <p className="font-medium text-gray-900">{ticket.site?.isp?.displayName || ticket.site?.isp?.name || '-'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <PhoneCall className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-gray-600">Contact</p>
+                  <p className="font-medium text-gray-900">{ticket.customer?.contactPerson || ticket.site?.customer?.contactPerson || '-'}</p>
+                  {ticket.customer?.phone && (
+                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                      <PhoneCall className="w-3 h-3" /> {ticket.customer.phone}
+                    </p>
+                  )}
+                  {ticket.customer?.email && (
+                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                      <AtSign className="w-3 h-3" /> {ticket.customer.email}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Building2 className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-600">Customer</p>
                   <p className="font-medium text-gray-900">{ticket.customer?.companyName || '-'}</p>
@@ -286,6 +325,15 @@ export default function TicketDetail() {
                   <div>
                     <p className="text-sm text-gray-600">Site</p>
                     <p className="font-medium text-gray-900">{ticket.site.siteCode}</p>
+                  </div>
+                </div>
+              )}
+              {ticket.site?.planName && (
+                <div className="flex items-center gap-3">
+                  <Wifi className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-600">Plan</p>
+                    <p className="font-medium text-gray-900">{ticket.site.planName}</p>
                   </div>
                 </div>
               )}

@@ -39,7 +39,7 @@ npm install
 npm run dev  # http://localhost:5175
 ```
 
-**Default Login:** `admin@superlinkit.com` / `SuperLink@2024!`
+**Default Login:** `admin@superlinkit.com` — password is set via the `SUPERLINK_ADMIN_PASSWORD` environment variable (see `backend/.env.example`).
 
 See [RUNNING.md](RUNNING.md) for detailed instructions.
 

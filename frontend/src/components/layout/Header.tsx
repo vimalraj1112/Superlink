@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
-  const { connected } = useSocket();
+  const { connected, retryCount, reconnectNow } = useSocket();
 
   return (
     <header className="h-16 bg-brand-50/80 backdrop-blur-sm border-b border-brand-100 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
@@ -35,15 +35,16 @@ export default function Header({ onMenuClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div
+        <button
+          onClick={reconnectNow}
           className={`hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-            connected ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
+            connected ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
-          title={connected ? 'Real-time connected' : 'Real-time disconnected'}
+          title={connected ? 'Real-time connected' : retryCount > 0 ? `Real-time reconnecting (attempt ${retryCount}) — click to retry now` : 'Real-time disconnected — click to retry'}
         >
           {connected ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-          {connected ? 'Live' : 'Offline'}
-        </div>
+          {connected ? 'Live' : retryCount > 0 ? `Reconnecting… (${retryCount})` : 'Offline · Retry'}
+        </button>
 
         <button className="btn btn-ghost btn-sm relative" aria-label="Notifications">
           <Bell className="w-5 h-5" />
