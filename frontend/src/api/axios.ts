@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { env } from '@/config/env';
+import { refreshAllQueries } from '@/lib/queryClient';
 
 const API_BASE_URL = `${env.VITE_API_URL}/api/${env.VITE_API_VERSION}`;
 
@@ -23,9 +24,23 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor: invalidate caches on writes and handle token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const method = response.config.method?.toUpperCase();
+    const url = response.config.url ?? '';
+
+    // Any successful write can change data shown elsewhere (the current list,
+    // related records, filter dropdowns and the dashboard counters), so
+    // invalidate every cached query and let it refetch. Auth endpoints are
+    // skipped because they run during login/logout when there is nothing to
+    // refresh.
+    if (method && method !== 'GET' && method !== 'HEAD' && !url.includes('/auth/')) {
+      refreshAllQueries();
+    }
+
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
