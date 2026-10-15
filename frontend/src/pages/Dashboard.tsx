@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Users,
   MapPin,
@@ -20,24 +20,82 @@ import { clsx } from 'clsx';
 
 interface StatCardProps {
   title: string;
-  value: string | number;
+  value: number;
   icon: React.ElementType;
-  color: string;
+  accent: string;
   link: string;
   subtitle?: string;
+  delay?: number;
 }
 
-function StatCard({ title, value, icon: Icon, color, link, subtitle }: StatCardProps) {
+/** Animate a number from its previous value up to the target. */
+function useCountUp(target: number, duration = 850) {
+  const [value, setValue] = useState(0);
+  const current = useRef(0);
+
+  useEffect(() => {
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion) {
+      current.current = target;
+      setValue(target);
+      return;
+    }
+
+    const from = current.current;
+    if (from === target) {
+      setValue(target);
+      return;
+    }
+
+    let frame = 0;
+    const start = performance.now();
+
+    const step = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const next = Math.round(from + (target - from) * eased);
+      current.current = next;
+      setValue(next);
+      if (progress < 1) frame = requestAnimationFrame(step);
+    };
+
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return value;
+}
+
+function StatCard({ title, value, icon: Icon, accent, link, subtitle, delay = 0 }: StatCardProps) {
+  const count = useCountUp(value);
+
   return (
-    <Link to={link} className="card p-5 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+    <Link
+      to={link}
+      style={{ '--card-delay': `${delay}ms` } as React.CSSProperties}
+      className="card card-shine group p-5"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 tabular-nums">
+            {count}
+          </p>
+          {subtitle && <p className="mt-1 text-sm text-gray-400">{subtitle}</p>}
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-          <Icon className="w-6 h-6" />
+        <div className="relative shrink-0">
+          <span
+            aria-hidden="true"
+            className={`absolute inset-0 rounded-xl bg-gradient-to-br ${accent} opacity-40 blur-md transition-opacity duration-500 group-hover:opacity-75`}
+          />
+          <div
+            className={`relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-white shadow-lg shadow-brand-500/20 transition-transform duration-500 group-hover:-rotate-3 group-hover:scale-110`}
+          >
+            <Icon className="h-6 w-6" />
+          </div>
         </div>
       </div>
     </Link>
@@ -166,33 +224,37 @@ export default function Dashboard() {
           title="Customers"
           value={totalCustomers}
           icon={Users}
-          color="bg-blue-100 text-blue-600"
+          accent="from-teal-400 to-cyan-600"
           link="/customers"
           subtitle="Total clients"
+          delay={0}
         />
         <StatCard
           title="Sites"
           value={totalSites}
           icon={MapPin}
-          color="bg-green-100 text-green-600"
+          accent="from-emerald-400 to-teal-600"
           link="/sites"
           subtitle="Customer sites"
+          delay={80}
         />
         <StatCard
           title="Total Tickets"
           value={totalTickets}
           icon={TicketCheck}
-          color="bg-purple-100 text-purple-600"
+          accent="from-fuchsia-500 to-purple-600"
           link="/tickets"
           subtitle="All tickets"
+          delay={160}
         />
         <StatCard
           title="ISPs"
           value={totalIsps}
           icon={Wifi}
-          color="bg-purple-100 text-purple-600"
+          accent="from-sky-400 to-indigo-600"
           link="/isps"
           subtitle="Provider directory"
+          delay={240}
         />
       </div>
 
