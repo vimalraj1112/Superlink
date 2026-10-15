@@ -4,9 +4,12 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/config/db';
 import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
-import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
+import { sendSuccess, sendPaginatedSuccess, sendNotFound, sendForbidden, sendValidationError } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
 import { UserRole } from '@prisma/client';
+
+// Roles that may only be assigned by a SUPER_ADMIN
+const PRIVILEGED_ROLES: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.ISP_OWNER];
 
 export const userCreateSchema = z.object({
   body: z.object({
@@ -97,6 +100,17 @@ export const getUser = asyncHandler(async (req: Request, res: Response) => {
 export const createUser = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { password, ...userData } = req.body;
 
+  // Only a SUPER_ADMIN may assign privileged roles
+  const role = await prisma.role.findUnique({ where: { id: userData.roleId }, select: { name: true } });
+  if (!role) {
+    sendValidationError(res, 'Invalid role');
+    return;
+  }
+  if (req.user!.role !== UserRole.SUPER_ADMIN && PRIVILEGED_ROLES.includes(role.name)) {
+    sendForbidden(res, 'Only a super admin can assign the SUPER_ADMIN or ISP_OWNER role');
+    return;
+  }
+
   // Hash password
   const bcrypt = await import('bcryptjs');
   const passwordHash = await bcrypt.default.hash(password, 12);
@@ -124,6 +138,34 @@ export const updateUser = asyncHandler(async (req: AuthenticatedRequest, res: Re
   // Extract password from body before spreading
   const { password, ...updateBody } = req.body;
 
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { role: { select: { name: true } } },
+  });
+  if (!target) {
+    sendNotFound(res, 'User not found');
+    return;
+  }
+
+  // Only a SUPER_ADMIN may modify another SUPER_ADMIN, or assign privileged roles
+  if (req.user!.role !== UserRole.SUPER_ADMIN) {
+    if (target.role.name === UserRole.SUPER_ADMIN) {
+      sendForbidden(res, 'Only a super admin can modify a super admin account');
+      return;
+    }
+    if (updateBody.roleId !== undefined) {
+      const newRole = await prisma.role.findUnique({ where: { id: updateBody.roleId }, select: { name: true } });
+      if (!newRole) {
+        sendValidationError(res, 'Invalid role');
+        return;
+      }
+      if (PRIVILEGED_ROLES.includes(newRole.name)) {
+        sendForbidden(res, 'Only a super admin can assign the SUPER_ADMIN or ISP_OWNER role');
+        return;
+      }
+    }
+  }
+
   const updateData: Prisma.UserUpdateInput = {
     ...updateBody,
   };
@@ -149,8 +191,23 @@ export const updateUser = asyncHandler(async (req: AuthenticatedRequest, res: Re
   sendSuccess(res, userWithoutPassword, 'User updated successfully');
 });
 
-export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
+export const deleteUser = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
+
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { role: { select: { name: true } } },
+  });
+  if (!target) {
+    sendNotFound(res, 'User not found');
+    return;
+  }
+
+  // Only a SUPER_ADMIN may deactivate a SUPER_ADMIN account
+  if (req.user!.role !== UserRole.SUPER_ADMIN && target.role.name === UserRole.SUPER_ADMIN) {
+    sendForbidden(res, 'Only a super admin can deactivate a super admin account');
+    return;
+  }
 
   // Soft delete - deactivate instead of deleting
   await prisma.user.update({

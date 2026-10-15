@@ -9,26 +9,22 @@ import { AppError } from '../middleware/errorHandler';
 const prisma = new PrismaClient();
 
 // Helper to check if user can access site credentials
-const canAccessCredentials = (user: AuthenticatedRequest['user'], site: { ispId: string; customerId: string }) => {
-  // SUPER_ADMIN can access everything
-  if (user?.role === 'SUPER_ADMIN') return true;
+// NOTE: There is currently no User -> ISP ownership relation in the data model,
+// so ISP_OWNER cannot be safely scoped to "its own" sites' credentials. Until
+// that relation exists, credential access is denied for ISP_OWNER by default
+// (fail closed) instead of being granted access to every site.
+const canAccessCredentials = (user: AuthenticatedRequest['user'], _site: { ispId: string; customerId: string }) => {
+  if (!user) return false;
 
-  // ISP_OWNER can access credentials for their ISP's sites
-  if (user?.role === 'ISP_OWNER') {
-    // Check if the site's ISP is owned by this user
-    // In a real implementation, you'd check user's ISP ownership
-    return true; // Simplified for now
-  }
-
-  // NOC can access credentials for all sites
-  if (user?.role === 'NOC') return true;
+  // SUPER_ADMIN and NOC can access credentials for all sites
+  if (user.role === 'SUPER_ADMIN' || user.role === 'NOC') return true;
 
   return false;
 };
 
 // Helper to check if user can reveal credentials
 const canRevealCredentials = (user: AuthenticatedRequest['user']) => {
-  const allowedRoles = ['SUPER_ADMIN', 'ISP_OWNER', 'NOC'];
+  const allowedRoles = ['SUPER_ADMIN', 'NOC'];
   return user && allowedRoles.includes(user.role);
 };
 
@@ -295,8 +291,8 @@ export const listAllCredentials = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Only SUPER_ADMIN and ISP_OWNER can list all credentials
-    if (!req.user || !['SUPER_ADMIN', 'ISP_OWNER'].includes(req.user.role)) {
+    // Only SUPER_ADMIN and NOC can list all credentials
+    if (!req.user || !['SUPER_ADMIN', 'NOC'].includes(req.user.role)) {
       sendForbidden(res, 'You do not have permission to list all credentials');
       return;
     }

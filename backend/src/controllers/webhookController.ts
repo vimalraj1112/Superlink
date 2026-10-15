@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { telegramService } from '@/services/telegramService';
-import { sendSuccess, sendError, sendValidationError } from '@/utils/apiResponse';
+import { sendSuccess, sendError, sendValidationError, sendUnauthorized } from '@/utils/apiResponse';
 import { asyncHandler } from '@/middleware/errorHandler';
 import { webhookRateLimiter } from '@/middleware/rateLimiter';
+import { env } from '@/config/env';
 
 /**
  * POST /api/v1/webhooks/telegram
@@ -13,6 +14,17 @@ export const telegramWebhook = [
   webhookRateLimiter,
   asyncHandler(async (req: Request, res: Response) => {
     try {
+      // Verify the secret token Telegram sends with every webhook request.
+      // When TELEGRAM_WEBHOOK_SECRET is configured, requests without a matching
+      // X-Telegram-Bot-Api-Secret-Token header are rejected (fail closed).
+      if (env.TELEGRAM_WEBHOOK_SECRET) {
+        const secretToken = req.headers['x-telegram-bot-api-secret-token'];
+        if (secretToken !== env.TELEGRAM_WEBHOOK_SECRET) {
+          sendUnauthorized(res, 'Invalid Telegram webhook secret token');
+          return;
+        }
+      }
+
       const update = req.body;
 
       if (!update || !update.update_id) {

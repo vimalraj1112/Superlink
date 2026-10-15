@@ -6,6 +6,7 @@ import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
 import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery, getDateRange } from '@/utils/pagination';
+import { paymentReadScope } from '@/utils/accessScope';
 import { PaymentType } from '@prisma/client';
 
 export const paymentCreateSchema = z.object({
@@ -44,7 +45,7 @@ async function generatePaymentNumber(): Promise<string> {
   return `${prefix}${String(max + 1).padStart(5, '0')}`;
 }
 
-export const listPayments = asyncHandler(async (req: Request, res: Response) => {
+export const listPayments = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { page, limit, skip, take } = getPaginationParams(req);
   const search = getSearchQuery(req);
   const type = req.query.type as PaymentType | undefined;
@@ -53,6 +54,7 @@ export const listPayments = asyncHandler(async (req: Request, res: Response) => 
   const { startDate, endDate } = getDateRange(req);
 
   const where: Prisma.PaymentWhereInput = {
+    ...paymentReadScope(req.user),
     ...(type ? { type } : {}),
     ...(customerId ? { customerId } : {}),
     ...(siteId ? { siteId } : {}),
@@ -94,11 +96,11 @@ export const listPayments = asyncHandler(async (req: Request, res: Response) => 
   sendPaginatedSuccess(res, payments, 'Payments fetched successfully', page, limit, totalItems);
 });
 
-export const getPayment = asyncHandler(async (req: Request, res: Response) => {
+export const getPayment = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const payment = await prisma.payment.findUnique({
-    where: { id },
+  const payment = await prisma.payment.findFirst({
+    where: { id, ...paymentReadScope(req.user) },
     include: {
       customer: true,
       site: { include: { isp: { select: { id: true, name: true, displayName: true } } } },
@@ -182,11 +184,12 @@ export const deletePayment = asyncHandler(async (req: Request, res: Response) =>
   sendSuccess(res, null, 'Payment deleted successfully');
 });
 
-export const getPaymentStats = asyncHandler(async (req: Request, res: Response) => {
+export const getPaymentStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { customerId, siteId } = req.query;
   const { startDate, endDate } = getDateRange(req);
 
   const where: Prisma.PaymentWhereInput = {
+    ...paymentReadScope(req.user),
     ...(customerId ? { customerId: customerId as string } : {}),
     ...(siteId ? { siteId: siteId as string } : {}),
     ...(startDate || endDate ? {

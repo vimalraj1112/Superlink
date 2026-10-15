@@ -6,6 +6,7 @@ import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
 import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
+import { siteReadScope } from '@/utils/accessScope';
 import { SiteStatus } from '@prisma/client';
 
 export const siteCreateSchema = z.object({
@@ -46,7 +47,7 @@ async function generateSiteCode(): Promise<string> {
   return `SITE-${String(max + 1).padStart(5, '0')}`;
 }
 
-export const listSites = asyncHandler(async (req: Request, res: Response) => {
+export const listSites = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { page, limit, skip, take } = getPaginationParams(req);
   const search = getSearchQuery(req);
   const status = req.query.status as SiteStatus | 'ALL' | undefined;
@@ -54,6 +55,7 @@ export const listSites = asyncHandler(async (req: Request, res: Response) => {
   const ispId = req.query.ispId as string | undefined;
 
   const where: Prisma.SiteWhereInput = {
+    ...siteReadScope(req.user),
     ...(status && status !== 'ALL' ? { status } : status !== 'ALL' ? { status: { not: SiteStatus.DISCONNECTED } } : {}),
     ...(customerId ? { customerId } : {}),
     ...(ispId ? { ispId } : {}),
@@ -88,11 +90,11 @@ export const listSites = asyncHandler(async (req: Request, res: Response) => {
   sendPaginatedSuccess(res, sites, 'Sites fetched successfully', page, limit, totalItems);
 });
 
-export const getSite = asyncHandler(async (req: Request, res: Response) => {
+export const getSite = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const site = await prisma.site.findUnique({
-    where: { id },
+  const site = await prisma.site.findFirst({
+    where: { id, ...siteReadScope(req.user) },
     include: {
       customer: true,
       isp: true,
@@ -171,11 +173,11 @@ export const deleteSite = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, null, 'Site marked as disconnected');
 });
 
-export const getSitesByCustomer = asyncHandler(async (req: Request, res: Response) => {
+export const getSitesByCustomer = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { customerId } = req.params;
 
   const sites = await prisma.site.findMany({
-    where: { customerId },
+    where: { customerId, ...siteReadScope(req.user) },
     orderBy: { createdAt: 'desc' },
     include: {
       isp: { select: { id: true, name: true, displayName: true } },

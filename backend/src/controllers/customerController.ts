@@ -6,6 +6,7 @@ import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
 import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
+import { customerReadScope } from '@/utils/accessScope';
 
 export const customerCreateSchema = z.object({
   body: z.object({
@@ -43,12 +44,13 @@ async function generateCustomerCode(): Promise<string> {
   return `CUST-${String(max + 1).padStart(5, '0')}`;
 }
 
-export const listCustomers = asyncHandler(async (req: Request, res: Response) => {
+export const listCustomers = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { page, limit, skip, take } = getPaginationParams(req);
   const search = getSearchQuery(req);
   const isActive = req.query.isActive as string | undefined;
 
   const where: Prisma.CustomerWhereInput = {
+    ...customerReadScope(req.user),
     ...(isActive !== undefined ? { isActive: isActive === 'true' } : {}),
     ...(search
       ? {
@@ -82,11 +84,11 @@ export const listCustomers = asyncHandler(async (req: Request, res: Response) =>
   sendPaginatedSuccess(res, customers, 'Customers fetched successfully', page, limit, totalItems);
 });
 
-export const getCustomer = asyncHandler(async (req: Request, res: Response) => {
+export const getCustomer = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const customer = await prisma.customer.findUnique({
-    where: { id },
+  const customer = await prisma.customer.findFirst({
+    where: { id, ...customerReadScope(req.user) },
     include: {
       sites: {
         include: { isp: true },

@@ -6,6 +6,7 @@ import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
 import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
+import { ticketReadScope } from '@/utils/accessScope';
 import { TicketStatus, TicketPriority, TicketSource } from '@prisma/client';
 import {
   emitTicketCreated,
@@ -62,7 +63,7 @@ async function generateTicketNumber(): Promise<string> {
   return `${prefix}${String(max + 1).padStart(5, '0')}`;
 }
 
-export const listTickets = asyncHandler(async (req: Request, res: Response) => {
+export const listTickets = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { page, limit, skip, take } = getPaginationParams(req);
   const search = getSearchQuery(req);
   const status = req.query.status as TicketStatus | undefined;
@@ -73,6 +74,7 @@ export const listTickets = asyncHandler(async (req: Request, res: Response) => {
   const assignedToId = req.query.assignedToId as string | undefined;
 
   const where: Prisma.TicketWhereInput = {
+    ...ticketReadScope(req.user),
     ...(status ? { status } : {}),
     ...(priority ? { priority } : {}),
     ...(source ? { source } : {}),
@@ -110,11 +112,11 @@ export const listTickets = asyncHandler(async (req: Request, res: Response) => {
   sendPaginatedSuccess(res, tickets, 'Tickets fetched successfully', page, limit, totalItems);
 });
 
-export const getTicket = asyncHandler(async (req: Request, res: Response) => {
+export const getTicket = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const ticket = await prisma.ticket.findUnique({
-    where: { id },
+  const ticket = await prisma.ticket.findFirst({
+    where: { id, ...ticketReadScope(req.user) },
     include: {
       customer: true,
       site: { include: { isp: { select: { id: true, name: true, displayName: true } } } },
@@ -307,11 +309,11 @@ export const addTicketMessage = asyncHandler(async (req: AuthenticatedRequest, r
   sendSuccess(res, message, 'Message added successfully', 201);
 });
 
-export const getTicketMessages = asyncHandler(async (req: Request, res: Response) => {
+export const getTicketMessages = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
 
-  const ticket = await prisma.ticket.findUnique({
-    where: { id },
+  const ticket = await prisma.ticket.findFirst({
+    where: { id, ...ticketReadScope(req.user) },
     select: { id: true },
   });
 

@@ -377,10 +377,17 @@ export class TelegramService {
     if (!this.isConfigured()) return false;
 
     try {
+      const body: Record<string, unknown> = { url };
+      // Use a secret token so Telegram signs every webhook request. This lets
+      // the receiver reject forged updates.
+      if (env.TELEGRAM_WEBHOOK_SECRET) {
+        body.secret_token = env.TELEGRAM_WEBHOOK_SECRET;
+      }
+
       const response = await fetch(`${this.baseUrl}/setWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify(body),
       });
 
       const result = (await response.json()) as TelegramApiResponse;

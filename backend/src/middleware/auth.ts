@@ -43,9 +43,12 @@ export async function authenticate(
       return;
     }
 
-    // Attach user info to request
+    // Attach user info to request. The role is taken from the current database
+    // record (not the token) so that role changes/demotions take effect
+    // immediately instead of persisting for the token's lifetime.
     req.user = {
       ...payload,
+      role: user.role.name,
       permissions: user.role.permissions as Record<string, string[]> | undefined,
     };
 
