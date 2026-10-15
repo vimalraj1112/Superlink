@@ -338,7 +338,7 @@ export default function QuotationDetail() {
             Are you sure you want to delete <strong>{quotation.quotationNumber}</strong>? This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setDeleteModalOpen(false)} className="btn-secondary">Cancel</button>
+            <button onClick={() => setDeleteModalOpen(false)} className="btn btn-secondary">Cancel</button>
             <button onClick={handleDelete} className="btn btn-danger" disabled={deleteMutation.isPending}>
               {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
             </button>
@@ -352,7 +352,7 @@ export default function QuotationDetail() {
             Create a copy of <strong>{quotation.quotationNumber}</strong> with a new validity date?
           </p>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setDuplicateModalOpen(false)} className="btn-secondary" disabled={duplicateMutation.isPending}>Cancel</button>
+            <button onClick={() => setDuplicateModalOpen(false)} className="btn btn-secondary" disabled={duplicateMutation.isPending}>Cancel</button>
             <button onClick={confirmDuplicate} className="btn btn-primary" disabled={duplicateMutation.isPending}>
               {duplicateMutation.isPending ? (
                 <>

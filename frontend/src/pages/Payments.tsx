@@ -307,7 +307,7 @@ export default function Payments() {
             This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setDeleteModalOpen(false)} className="btn-secondary">
+            <button onClick={() => setDeleteModalOpen(false)} className="btn btn-secondary">
               Cancel
             </button>
             <button onClick={handleDelete} className="btn btn-danger">

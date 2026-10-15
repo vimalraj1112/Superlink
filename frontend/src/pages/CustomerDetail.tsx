@@ -249,7 +249,7 @@ export default function CustomerDetail() {
           Back
         </Link>
         <div className="flex items-center gap-3">
-          <Link to={`/customers/${customer.id}/edit`} className="btn-secondary">
+          <Link to={`/customers/${customer.id}/edit`} className="btn btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Link>
@@ -418,7 +418,7 @@ export default function CustomerDetail() {
             This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setDeleteSiteModalOpen(false)} className="btn-secondary">
+            <button onClick={() => setDeleteSiteModalOpen(false)} className="btn btn-secondary">
               Cancel
             </button>
             <button onClick={handleDeleteSite} className="btn btn-danger">

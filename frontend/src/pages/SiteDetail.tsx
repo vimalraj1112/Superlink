@@ -582,7 +582,7 @@ export default function SiteDetail() {
             Are you sure you want to delete <strong>{site.siteCode}</strong>? This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setDeleteModalOpen(false)} className="btn-secondary">Cancel</button>
+            <button onClick={() => setDeleteModalOpen(false)} className="btn btn-secondary">Cancel</button>
             <button onClick={handleDelete} className="btn btn-danger">Delete</button>
           </div>
         </Modal>
