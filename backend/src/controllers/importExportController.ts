@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma, SiteStatus } from '@prisma/client';
 import { prisma } from '@/config/db';
 import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
@@ -8,58 +8,19 @@ import { sendSuccess, sendError, sendValidationError } from '@/utils/apiResponse
 import * as XLSX from 'xlsx';
 
 // Validation schemas
+// Import payloads are validated row-by-row by the preview controllers so the UI
+// can show exactly which rows are invalid instead of rejecting the whole file
+// with a generic 400. Here we only require a non-empty array of row objects.
 export const importCustomersSchema = z.object({
   body: z.object({
-    customers: z.array(z.object({
-      customerCode: z.string().optional(),
-      companyName: z.string().min(1),
-      contactPerson: z.string().min(1),
-      email: z.string().email(),
-      phone: z.string().min(5),
-      alternatePhone: z.string().optional(),
-      address: z.string().min(1),
-      city: z.string().min(1),
-      state: z.string().min(1),
-      pincode: z.string().min(3),
-      gstNumber: z.string().optional(),
-      panNumber: z.string().optional(),
-      billingAddress: z.string().optional(),
-      billingCity: z.string().optional(),
-      billingState: z.string().optional(),
-      billingPincode: z.string().optional(),
-      notes: z.string().optional(),
-      isActive: z.boolean().optional(),
-    })).min(1, 'At least one customer is required'),
+    customers: z.array(z.record(z.any())).min(1, 'At least one customer is required'),
     previewOnly: z.boolean().optional(),
   }),
 });
 
 export const importSitesSchema = z.object({
   body: z.object({
-    sites: z.array(z.object({
-      siteCode: z.string().optional(),
-      customerId: z.string().min(1, 'Customer is required'),
-      ispId: z.string().optional(),
-      planName: z.string().min(1),
-      bandwidth: z.string().min(1),
-      mrc: z.number().min(0).optional(),
-      otc: z.number().min(0).optional(),
-      staticIpCharge: z.number().min(0).optional(),
-      staticIpCount: z.number().min(0).optional(),
-      otherCharges: z.number().min(0).optional(),
-      status: z.string().optional(),
-      installationAddress: z.string().min(1),
-      installationCity: z.string().min(1),
-      installationState: z.string().min(1),
-      installationPincode: z.string().min(3),
-      latitude: z.number().optional(),
-      longitude: z.number().optional(),
-      connectionType: z.string().optional(),
-      circuitId: z.string().optional(),
-      provisionedAt: z.string().datetime().optional().nullable(),
-      renewalDate: z.string().datetime().optional().nullable(),
-      notes: z.string().optional(),
-    })).min(1, 'At least one site is required'),
+    sites: z.array(z.record(z.any())).min(1, 'At least one site is required'),
     previewOnly: z.boolean().optional(),
   }),
 });
@@ -72,6 +33,139 @@ async function generateCustomerCode(): Promise<string> {
 async function generateSiteCode(): Promise<string> {
   const count = await prisma.site.count();
   return `SITE-${String(count + 1).padStart(5, '0')}`;
+}
+
+const SITE_STATUSES = Object.values(SiteStatus) as string[];
+
+// Excel imports identify related records by human-friendly values (a customer
+// code like CUST-0001, or an ISP name), not raw cuids. Resolve either form.
+async function resolveCustomer(value?: unknown) {
+  const v = typeof value === 'string' ? value.trim() : '';
+  if (!v) return null;
+  return prisma.customer.findFirst({ where: { OR: [{ id: v }, { customerCode: v }] } });
+}
+
+async function resolveIsp(value?: unknown) {
+  const v = typeof value === 'string' ? value.trim() : '';
+  if (!v) return null;
+  return prisma.iSP.findFirst({ where: { OR: [{ id: v }, { name: v }, { displayName: v }] } });
+}
+
+function parseDate(value: unknown): Date | null {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value === 'number') {
+    // Excel stores dates as serial numbers (days since 1899-12-30).
+    const d = new Date(Math.round((value - 25569) * 86400 * 1000));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const d = value instanceof Date ? value : new Date(String(value));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function toNumber(value: unknown, fallback = 0): number {
+  const n = Number(String(value).replace(/,/g, ''));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+// --- Header normalization -------------------------------------------------
+// Excel sheets use human-readable headers ("Company Name") while the API works
+// with camelCase fields ("companyName"). Map either form so imports succeed no
+// matter how the header row is worded/spaced/cased.
+const normKey = (s: string) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const CUSTOMER_ALIASES: Record<string, string[]> = {
+  customerCode: ['Customer Code', 'customerCode'],
+  companyName: ['Company Name', 'Company', 'Customer Name'],
+  contactPerson: ['Contact Person', 'Contact', 'Contact Name'],
+  email: ['Email', 'Email Address'],
+  phone: ['Phone', 'Mobile', 'Phone Number', 'Contact Number'],
+  alternatePhone: ['Alternate Phone', 'Alternate Mobile'],
+  address: ['Address', 'Street'],
+  city: ['City'],
+  state: ['State'],
+  pincode: ['Pincode', 'Pin Code', 'Zip', 'Postal Code'],
+  gstNumber: ['GST Number', 'GST', 'GSTIN'],
+  panNumber: ['PAN Number', 'PAN'],
+  billingAddress: ['Billing Address'],
+  billingCity: ['Billing City'],
+  billingState: ['Billing State'],
+  billingPincode: ['Billing Pincode'],
+  notes: ['Notes', 'Remarks'],
+  status: ['Status', 'isActive', 'Active'],
+};
+
+const SITE_ALIASES: Record<string, string[]> = {
+  siteCode: ['Site Code', 'siteCode'],
+  customerId: ['Customer ID', 'Customer Code', 'Customer'],
+  ispId: ['ISP ID', 'ISP', 'ISP Name', 'Provider'],
+  planName: ['Plan Name', 'Plan'],
+  bandwidth: ['Bandwidth'],
+  mrc: ['MRC'],
+  otc: ['OTC'],
+  staticIpCharge: ['Static IP Charge'],
+  staticIpCount: ['Static IP Count'],
+  otherCharges: ['Other Charges'],
+  status: ['Status'],
+  installationAddress: ['Installation Address'],
+  installationCity: ['Installation City'],
+  installationState: ['Installation State'],
+  installationPincode: ['Installation Pincode'],
+  latitude: ['Latitude'],
+  longitude: ['Longitude'],
+  connectionType: ['Connection Type'],
+  circuitId: ['Circuit ID'],
+  provisionedAt: ['Provisioned At', 'Provisioned Date'],
+  renewalDate: ['Renewal Date'],
+  notes: ['Notes', 'Remarks'],
+};
+
+function applyAliases(raw: any, aliases: Record<string, string[]>): any {
+  const byKey: Record<string, any> = {};
+  for (const k of Object.keys(raw || {})) byKey[normKey(k)] = raw[k];
+
+  const out: any = {};
+  for (const field of Object.keys(aliases)) {
+    for (const alias of aliases[field]) {
+      const v = byKey[normKey(alias)];
+      if (v !== undefined && v !== null && v !== '') {
+        out[field] = v;
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+const SITE_STATUS_ALIASES: Record<string, string> = {
+  ACTIVE: 'DELIVERED_ACTIVE',
+  RUNNING: 'DELIVERED_ACTIVE',
+  INSTALLED: 'DELIVERED_ACTIVE',
+  PENDING: 'FEASIBILITY_PENDING',
+  SURVEY: 'SURVEY_IN_PROGRESS',
+  APPROVED: 'FEASIBILITY_APPROVED',
+  REJECTED: 'FEASIBILITY_REJECTED',
+};
+
+function normalizeSiteStatus(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const key = String(value).toUpperCase().replace(/\s+/g, '_');
+  return SITE_STATUS_ALIASES[key] || key;
+}
+
+function normalizeCustomerRow(raw: any): any {
+  const row = applyAliases(raw, CUSTOMER_ALIASES);
+  // "Status" column -> isActive boolean
+  if (row.status !== undefined) {
+    row.isActive = /^(active|true|yes|1|enabled)$/i.test(String(row.status));
+    delete row.status;
+  }
+  return row;
+}
+
+function normalizeSiteRow(raw: any): any {
+  const row = applyAliases(raw, SITE_ALIASES);
+  if (row.status !== undefined) row.status = normalizeSiteStatus(row.status);
+  return row;
 }
 
 // Export customers to Excel
@@ -239,8 +333,8 @@ export const exportSites = asyncHandler(async (req: Request, res: Response) => {
   // Template sheet
   const templateData = [{
     'Site Code': '(Auto-generated if empty)',
-    'Customer ID': 'customer-uuid-here',
-    'ISP ID': 'isp-uuid-here (optional)',
+    'Customer ID': 'Customer code or ID (e.g. CUST-0001)',
+    'ISP ID': 'ISP name or ID (required)',
     'Plan Name': 'Enterprise 100Mbps',
     'Bandwidth': '100 Mbps',
     'MRC': 25000,
@@ -421,7 +515,7 @@ export const previewImportCustomers = asyncHandler(async (req: Request, res: Res
   const errors = [];
 
   for (let i = 0; i < customers.length; i++) {
-    const row = customers[i];
+    const row = normalizeCustomerRow(customers[i]);
     const rowErrors: string[] = [];
 
     if (!row.companyName) rowErrors.push('Company name is required');
@@ -474,10 +568,11 @@ export const previewImportSites = asyncHandler(async (req: Request, res: Respons
   const errors = [];
 
   for (let i = 0; i < sites.length; i++) {
-    const row = sites[i];
+    const row = normalizeSiteRow(sites[i]);
     const rowErrors: string[] = [];
 
-    if (!row.customerId) rowErrors.push('Customer ID is required');
+    if (!row.customerId) rowErrors.push('Customer is required (id or code)');
+    if (!row.ispId) rowErrors.push('ISP is required (id or name)');
     if (!row.planName) rowErrors.push('Plan name is required');
     if (!row.bandwidth) rowErrors.push('Bandwidth is required');
     if (!row.installationAddress) rowErrors.push('Installation address is required');
@@ -485,16 +580,20 @@ export const previewImportSites = asyncHandler(async (req: Request, res: Respons
     if (!row.installationState) rowErrors.push('Installation state is required');
     if (!row.installationPincode) rowErrors.push('Installation pincode is required');
 
-    // Validate customer exists
+    // Validate customer exists (accepts id or customerCode)
     if (row.customerId) {
-      const customer = await prisma.customer.findUnique({ where: { id: row.customerId } });
-      if (!customer) rowErrors.push('Customer not found');
+      const customer = await resolveCustomer(row.customerId);
+      if (!customer) rowErrors.push(`Customer not found: ${row.customerId}`);
     }
 
-    // Validate ISP exists
+    // Validate ISP exists (accepts id or name)
     if (row.ispId) {
-      const isp = await prisma.iSP.findUnique({ where: { id: row.ispId } });
-      if (!isp) rowErrors.push('ISP not found');
+      const isp = await resolveIsp(row.ispId);
+      if (!isp) rowErrors.push(`ISP not found: ${row.ispId}`);
+    }
+
+    if (row.status && !SITE_STATUSES.includes(String(row.status))) {
+      rowErrors.push(`Invalid status: ${row.status} (expected one of ${SITE_STATUSES.join(', ')})`);
     }
 
     // Check duplicate siteCode
@@ -531,7 +630,8 @@ export const executeImportCustomers = asyncHandler(async (req: AuthenticatedRequ
   const created = [];
   const errors = [];
 
-  for (const row of customers) {
+  for (const raw of customers) {
+    const row = normalizeCustomerRow(raw);
     try {
       const customerCode = row.customerCode || await generateCustomerCode();
 
@@ -550,8 +650,24 @@ export const executeImportCustomers = asyncHandler(async (req: AuthenticatedRequ
 
       const customer = await prisma.customer.create({
         data: {
-          ...row,
           customerCode,
+          companyName: row.companyName,
+          contactPerson: row.contactPerson,
+          email: row.email,
+          phone: String(row.phone),
+          alternatePhone: row.alternatePhone || null,
+          address: row.address,
+          city: row.city,
+          state: row.state,
+          pincode: String(row.pincode),
+          gstNumber: row.gstNumber || null,
+          panNumber: row.panNumber || null,
+          billingAddress: row.billingAddress || null,
+          billingCity: row.billingCity || null,
+          billingState: row.billingState || null,
+          billingPincode: row.billingPincode || null,
+          notes: row.notes || null,
+          isActive: row.isActive !== false,
           createdById: req.user!.userId,
         },
       });
@@ -576,24 +692,23 @@ export const executeImportSites = asyncHandler(async (req: AuthenticatedRequest,
   const created = [];
   const errors = [];
 
-  for (const row of sites) {
+  for (const raw of sites) {
+    const row = normalizeSiteRow(raw);
     try {
       const siteCode = row.siteCode || await generateSiteCode();
 
-      // Validate customer
-      const customer = await prisma.customer.findUnique({ where: { id: row.customerId } });
+      // Validate + resolve customer (id or code)
+      const customer = await resolveCustomer(row.customerId);
       if (!customer) {
-        errors.push({ data: row, error: 'Customer not found' });
+        errors.push({ data: row, error: `Customer not found: ${row.customerId ?? '(missing)'}` });
         continue;
       }
 
-      // Validate ISP
-      if (row.ispId) {
-        const isp = await prisma.iSP.findUnique({ where: { id: row.ispId } });
-        if (!isp) {
-          errors.push({ data: row, error: 'ISP not found' });
-          continue;
-        }
+      // Validate + resolve ISP (id or name). ISP is required by the schema.
+      const isp = await resolveIsp(row.ispId);
+      if (!isp) {
+        errors.push({ data: row, error: `ISP not found: ${row.ispId ?? '(missing)'}` });
+        continue;
       }
 
       // Check duplicate siteCode
@@ -603,18 +718,34 @@ export const executeImportSites = asyncHandler(async (req: AuthenticatedRequest,
         continue;
       }
 
+      const status = row.status && SITE_STATUSES.includes(String(row.status))
+        ? (row.status as SiteStatus)
+        : undefined;
+
       const site = await prisma.site.create({
         data: {
-          ...row,
           siteCode,
-          mrc: row.mrc || 0,
-          otc: row.otc || 0,
-          staticIpCharge: row.staticIpCharge || 0,
-          staticIpCount: row.staticIpCount || 0,
-          otherCharges: row.otherCharges || 0,
-          status: row.status || 'FEASIBILITY_PENDING',
-          provisionedAt: row.provisionedAt ? new Date(row.provisionedAt) : null,
-          renewalDate: row.renewalDate ? new Date(row.renewalDate) : null,
+          customerId: customer.id,
+          ispId: isp.id,
+          planName: row.planName,
+          bandwidth: row.bandwidth,
+          mrc: toNumber(row.mrc),
+          otc: toNumber(row.otc),
+          staticIpCharge: toNumber(row.staticIpCharge),
+          staticIpCount: Math.trunc(toNumber(row.staticIpCount)),
+          otherCharges: toNumber(row.otherCharges),
+          ...(status ? { status } : {}),
+          installationAddress: row.installationAddress,
+          installationCity: row.installationCity,
+          installationState: row.installationState,
+          installationPincode: String(row.installationPincode),
+          latitude: row.latitude === undefined || row.latitude === '' ? null : toNumber(row.latitude),
+          longitude: row.longitude === undefined || row.longitude === '' ? null : toNumber(row.longitude),
+          connectionType: row.connectionType || null,
+          circuitId: row.circuitId || null,
+          provisionedAt: parseDate(row.provisionedAt),
+          renewalDate: parseDate(row.renewalDate),
+          notes: row.notes || null,
           createdById: req.user!.userId,
         },
       });
@@ -672,8 +803,8 @@ export const downloadTemplate = asyncHandler(async (req: Request, res: Response)
   } else if (type === 'sites') {
     const templateData = [{
       'Site Code': '(Auto-generated if empty)',
-      'Customer ID': 'customer-uuid-here',
-      'ISP ID': 'isp-uuid-here (optional)',
+      'Customer ID': 'Customer code or ID (e.g. CUST-0001)',
+      'ISP ID': 'ISP name or ID (required)',
       'Plan Name': 'Enterprise 100Mbps',
       'Bandwidth': '100 Mbps',
       'MRC': 25000,

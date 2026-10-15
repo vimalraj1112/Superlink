@@ -20,6 +20,117 @@ interface ImportRow {
   errors: string[];
 }
 
+// Excel sheets use human-readable headers ("Company Name") while the API expects
+// camelCase field names ("companyName"). Normalizing each parsed row here means
+// imports work regardless of spacing, casing or underscores in the header row.
+const normalizeKey = (s: string) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+// Friendly status words users tend to type in the sheet -> SiteStatus enum.
+const SITE_STATUS_ALIASES: Record<string, string> = {
+  ACTIVE: 'DELIVERED_ACTIVE',
+  RUNNING: 'DELIVERED_ACTIVE',
+  INSTALLED: 'DELIVERED_ACTIVE',
+  PENDING: 'FEASIBILITY_PENDING',
+  SURVEY: 'SURVEY_IN_PROGRESS',
+  APPROVED: 'FEASIBILITY_APPROVED',
+  REJECTED: 'FEASIBILITY_REJECTED',
+};
+
+function makeGetter(raw: any) {
+  const byKey: Record<string, any> = {};
+  for (const k of Object.keys(raw || {})) byKey[normalizeKey(k)] = raw[k];
+  return (...aliases: string[]): any => {
+    for (const a of aliases) {
+      const v = byKey[normalizeKey(a)];
+      if (v !== undefined && v !== null && v !== '') return v;
+    }
+    return undefined;
+  };
+}
+
+const asString = (v: any): string | undefined => {
+  if (v === undefined || v === null || v === '') return undefined;
+  return String(v).trim();
+};
+
+const asNumber = (v: any): number | undefined => {
+  if (v === undefined || v === null || v === '') return undefined;
+  const n = Number(String(v).replace(/[^0-9.\-]/g, ''));
+  return Number.isFinite(n) ? n : undefined;
+};
+
+// Excel dates arrive either as ISO-ish strings or as serial numbers.
+const asIsoDate = (v: any): string | undefined => {
+  if (v === undefined || v === null || v === '') return undefined;
+  const d = typeof v === 'number'
+    ? new Date(Math.round((v - 25569) * 86400 * 1000))
+    : new Date(v);
+  return isNaN(d.getTime()) ? undefined : d.toISOString();
+};
+
+function normalizeRow(raw: any, type: ImportType): any {
+  const g = makeGetter(raw);
+  const put = (obj: any, key: string, val: any) => {
+    if (val !== undefined) obj[key] = val;
+  };
+
+  if (type === 'customers') {
+    const row: any = {};
+    put(row, 'customerCode', asString(g('customerCode', 'Customer Code')));
+    put(row, 'companyName', asString(g('companyName', 'Company Name', 'Company')));
+    put(row, 'contactPerson', asString(g('contactPerson', 'Contact Person', 'Contact')));
+    put(row, 'email', asString(g('email', 'Email')));
+    put(row, 'phone', asString(g('phone', 'Phone', 'Mobile', 'Contact Number')));
+    put(row, 'alternatePhone', asString(g('alternatePhone', 'Alternate Phone')));
+    put(row, 'address', asString(g('address', 'Address')));
+    put(row, 'city', asString(g('city', 'City')));
+    put(row, 'state', asString(g('state', 'State')));
+    put(row, 'pincode', asString(g('pincode', 'Pincode', 'Pin Code', 'Zip')));
+    put(row, 'gstNumber', asString(g('gstNumber', 'GST Number', 'GST', 'GSTIN')));
+    put(row, 'panNumber', asString(g('panNumber', 'PAN Number', 'PAN')));
+    put(row, 'billingAddress', asString(g('billingAddress', 'Billing Address')));
+    put(row, 'billingCity', asString(g('billingCity', 'Billing City')));
+    put(row, 'billingState', asString(g('billingState', 'Billing State')));
+    put(row, 'billingPincode', asString(g('billingPincode', 'Billing Pincode')));
+    put(row, 'notes', asString(g('notes', 'Notes')));
+    const status = asString(g('status', 'Status', 'isActive'));
+    if (status !== undefined) row.isActive = /^(active|true|yes|1|enabled)$/i.test(status);
+    return row;
+  }
+
+  // sites
+  const row: any = {};
+  put(row, 'siteCode', asString(g('siteCode', 'Site Code')));
+  // Accept either the raw id, a customer code (CUST-0001) or the ISP name — the
+  // backend resolves whichever it is.
+  put(row, 'customerId', asString(g('customerId', 'Customer ID', 'Customer Code')));
+  put(row, 'ispId', asString(g('ispId', 'ISP ID', 'ISP', 'ISP Name', 'Provider')));
+  put(row, 'planName', asString(g('planName', 'Plan Name', 'Plan')));
+  put(row, 'bandwidth', asString(g('bandwidth', 'Bandwidth')));
+  put(row, 'mrc', asNumber(g('mrc', 'MRC')));
+  put(row, 'otc', asNumber(g('otc', 'OTC')));
+  put(row, 'staticIpCharge', asNumber(g('staticIpCharge', 'Static IP Charge')));
+  put(row, 'staticIpCount', asNumber(g('staticIpCount', 'Static IP Count')));
+  put(row, 'otherCharges', asNumber(g('otherCharges', 'Other Charges')));
+  const status = asString(g('status', 'Status'));
+  if (status !== undefined) {
+    const key = status.toUpperCase().replace(/\s+/g, '_');
+    row.status = SITE_STATUS_ALIASES[key] || key;
+  }
+  put(row, 'installationAddress', asString(g('installationAddress', 'Installation Address')));
+  put(row, 'installationCity', asString(g('installationCity', 'Installation City')));
+  put(row, 'installationState', asString(g('installationState', 'Installation State')));
+  put(row, 'installationPincode', asString(g('installationPincode', 'Installation Pincode')));
+  put(row, 'latitude', asNumber(g('latitude', 'Latitude')));
+  put(row, 'longitude', asNumber(g('longitude', 'Longitude')));
+  put(row, 'connectionType', asString(g('connectionType', 'Connection Type')));
+  put(row, 'circuitId', asString(g('circuitId', 'Circuit ID')));
+  put(row, 'provisionedAt', asIsoDate(g('provisionedAt', 'Provisioned At', 'Provisioned Date')));
+  put(row, 'renewalDate', asIsoDate(g('renewalDate', 'Renewal Date')));
+  put(row, 'notes', asString(g('notes', 'Notes')));
+  return row;
+}
+
 export default function ImportExport() {
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
   const [importType, setImportType] = useState<ImportType>('customers');
@@ -211,10 +322,12 @@ export default function ImportExport() {
       return;
     }
 
+    const rows = parsedData.map(r => normalizeRow(r, importType));
+
     if (importType === 'customers') {
-      previewImportCustomersMutation.mutate({ customers: parsedData, previewOnly: true });
+      previewImportCustomersMutation.mutate({ customers: rows, previewOnly: true });
     } else {
-      previewImportSitesMutation.mutate({ sites: parsedData, previewOnly: true });
+      previewImportSitesMutation.mutate({ sites: rows, previewOnly: true });
     }
   };
 
