@@ -98,7 +98,21 @@ export const getSite = asyncHandler(async (req: AuthenticatedRequest, res: Respo
     include: {
       customer: true,
       isp: true,
-      credentials: true,
+      credentials: {
+        select: {
+          id: true,
+          siteId: true,
+          username: true,
+          routerIp: true,
+          routerModel: true,
+          vlanId: true,
+          pppoeUsername: true,
+          staticIps: true,
+          notes: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       tickets: {
         orderBy: { createdAt: 'desc' },
         take: 10,

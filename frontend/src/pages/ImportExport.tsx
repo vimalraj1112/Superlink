@@ -29,14 +29,14 @@ export default function ImportExport() {
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [importErrors, setImportErrors] = useState<any[]>([]);
 
-  // Fetch customers and ISPs for import validation
-  const { data: customersData } = useMutation({
-    mutationFn: () => customerApi.list({ limit: 100, sortBy: 'companyName', sortOrder: 'asc' }),
-  });
+  // Fetch customers and ISPs for import validation (not currently used)
+  // const { data: customersData } = useMutation({
+  //   mutationFn: () => customerApi.list({ limit: 100, sortBy: 'companyName', sortOrder: 'asc' }),
+  // });
 
-  const { data: ispsData } = useMutation({
-    mutationFn: () => ispApi.list({ limit: 100, sortBy: 'name', sortOrder: 'asc' }),
-  });
+  // const { data: ispsData } = useMutation({
+  //   mutationFn: () => ispApi.list({ limit: 100, sortBy: 'name', sortOrder: 'asc' }),
+  // });
 
   // Download template
   const downloadTemplateMutation = useMutation({

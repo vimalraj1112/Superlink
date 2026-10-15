@@ -1,12 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { sendSuccess, sendError, sendNotFound, sendForbidden, sendPaginatedSuccess } from '../utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '../utils/pagination';
 import { encrypt, decrypt } from '../services/encryptionService';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { prisma } from '../config/db';
 
-const prisma = new PrismaClient();
 
 // Helper to check if user can access site credentials
 // NOTE: There is currently no User -> ISP ownership relation in the data model,

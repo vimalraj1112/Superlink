@@ -8,6 +8,23 @@ export interface AppError extends Error {
   details?: unknown;
 }
 
+const SENSITIVE_KEYS = ['password', 'passwordHash', 'currentPassword', 'newPassword', 'confirmPassword', 'token', 'accessToken', 'refreshToken', 'authorization'];
+
+function redact(obj: any) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result: any = Array.isArray(obj) ? [] : {};
+  for (const key of Object.keys(obj)) {
+    if (SENSITIVE_KEYS.includes(key)) {
+      result[key] = '[REDACTED]';
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      result[key] = redact(obj[key]);
+    } else {
+      result[key] = obj[key];
+    }
+  }
+  return result;
+}
+
 export function notFoundHandler(req: Request, res: Response): void {
   sendNotFound(res, `Route ${req.method} ${req.originalUrl} not found`);
 }
@@ -23,9 +40,9 @@ export function errorHandler(
     stack: error.stack,
     url: req.originalUrl,
     method: req.method,
-    body: req.body,
-    params: req.params,
-    query: req.query,
+    body: redact(req.body),
+    params: redact(req.params),
+    query: redact(req.query),
   });
 
   // Prisma unique constraint violation
