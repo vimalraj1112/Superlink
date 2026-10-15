@@ -9,6 +9,10 @@ import Modal from '@/components/common/Modal';
 
 type ImportType = 'customers' | 'sites' | 'payments' | 'tickets';
 
+// Only these types have backend import endpoints implemented. Selecting any
+// other type must NOT fall through to the sites importer.
+const SUPPORTED_IMPORT_TYPES: ImportType[] = ['customers', 'sites'];
+
 interface ImportRow {
   row: number;
   data: any;
@@ -197,6 +201,11 @@ export default function ImportExport() {
   };
 
   const handlePreview = () => {
+    if (!SUPPORTED_IMPORT_TYPES.includes(importType)) {
+      toast.error(`Importing ${importType} is not supported yet`);
+      return;
+    }
+
     if (parsedData.length === 0) {
       toast.error('Please select a file first');
       return;
@@ -210,6 +219,11 @@ export default function ImportExport() {
   };
 
   const handleExecuteImport = () => {
+    if (!SUPPORTED_IMPORT_TYPES.includes(importType)) {
+      toast.error(`Importing ${importType} is not supported yet`);
+      return;
+    }
+
     if (previewData.length === 0) {
       toast.error('Please preview the import first');
       return;
@@ -436,11 +450,13 @@ export default function ImportExport() {
               </button>
               <button
                 onClick={() => { setImportType('payments'); resetImport(); }}
+                disabled
+                title="Importing payments is not supported yet"
                 className={clsx(
-                  'p-4 border-2 rounded-lg text-left transition-all',
+                  'p-4 border-2 rounded-lg text-left transition-all cursor-not-allowed opacity-60',
                   importType === 'payments'
                     ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-gray-200'
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -449,17 +465,19 @@ export default function ImportExport() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Payments</p>
-                    <p className="text-sm text-gray-500">Payment records with date, type, amount</p>
+                    <p className="text-sm text-gray-500">Import not available yet</p>
                   </div>
                 </div>
               </button>
               <button
                 onClick={() => { setImportType('tickets'); resetImport(); }}
+                disabled
+                title="Importing tickets is not supported yet"
                 className={clsx(
-                  'p-4 border-2 rounded-lg text-left transition-all',
+                  'p-4 border-2 rounded-lg text-left transition-all cursor-not-allowed opacity-60',
                   importType === 'tickets'
                     ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-gray-200'
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -468,7 +486,7 @@ export default function ImportExport() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Tickets</p>
-                    <p className="text-sm text-gray-500">Support tickets with status and priority</p>
+                    <p className="text-sm text-gray-500">Import not available yet</p>
                   </div>
                 </div>
               </button>

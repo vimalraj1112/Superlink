@@ -15,6 +15,7 @@ export default function Customers() {
   const navigate = useNavigate();
   const location = useLocation();
   const isEditRoute = /^\/customers\/[^/]+\/edit\/?$/.test(location.pathname);
+  const isCreateRoute = /^\/customers\/new\/?$/.test(location.pathname);
   const editId = isEditRoute ? location.pathname.split('/')[2] : null;
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
@@ -43,20 +44,25 @@ export default function Customers() {
   });
 
   useEffect(() => {
-    if (isEditRoute && editId && editCustomerData?.data?.data) {
+    if (isCreateRoute) {
+      setEditingCustomer(null);
+      setFormModalOpen(true);
+    } else if (isEditRoute && editId && editCustomerData?.data?.data) {
       setEditingCustomer(editCustomerData.data.data);
       setFormModalOpen(true);
-    } else if (!isEditRoute) {
+    } else if (!isEditRoute && !isCreateRoute) {
       setFormModalOpen(false);
       setEditingCustomer(null);
     }
-  }, [isEditRoute, editId, editCustomerData]);
+  }, [isCreateRoute, isEditRoute, editId, editCustomerData]);
 
   const handleFormClose = () => {
     setFormModalOpen(false);
     setEditingCustomer(null);
     if (isEditRoute && editId) {
       navigate(`/customers/${editId}`, { replace: true });
+    } else if (isCreateRoute) {
+      navigate('/customers', { replace: true });
     }
   };
 
@@ -166,7 +172,7 @@ export default function Customers() {
           <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-1">Manage customer accounts and contacts</p>
         </div>
-    <button onClick={() => { setEditingCustomer(null); setFormModalOpen(true); }} className="btn btn-primary">
+    <button onClick={() => navigate('/customers/new')} className="btn btn-primary">
       <Plus className="w-4 h-4 mr-2" />
       Add Customer
     </button>

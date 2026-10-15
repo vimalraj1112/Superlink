@@ -28,6 +28,9 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!initialData;
+  // When opened from the list page there is no :id route param, so fall back to
+  // the id of the ticket being edited.
+  const targetId = initialData?.id || id;
 
   const [formData, setFormData] = useState({
     title: '',
@@ -144,7 +147,7 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
       if (response.data.success) {
         toast.success('Ticket updated successfully');
         queryClient.invalidateQueries({ queryKey: ['tickets'] });
-        queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+        queryClient.invalidateQueries({ queryKey: ['ticket', targetId] });
         onClose();
       } else {
         toast.error(response.data.message || 'Failed to update ticket');
@@ -173,8 +176,8 @@ export default function TicketForm({ isOpen, onClose, initialData }: TicketFormP
     if (!submitData.assignedToId) delete submitData.assignedToId;
     if (!submitData.slaDueAt) delete submitData.slaDueAt;
 
-    if (isEditing && id) {
-      updateMutation.mutate({ id, data: submitData });
+    if (isEditing && targetId) {
+      updateMutation.mutate({ id: targetId, data: submitData });
     } else {
       createMutation.mutate(submitData);
     }

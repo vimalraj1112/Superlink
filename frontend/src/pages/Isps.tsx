@@ -15,6 +15,7 @@ export default function Isps() {
   const navigate = useNavigate();
   const location = useLocation();
   const isEditRoute = /^\/isps\/[^/]+\/edit\/?$/.test(location.pathname);
+  const isCreateRoute = /^\/isps\/new\/?$/.test(location.pathname);
   const editId = isEditRoute ? location.pathname.split('/')[2] : null;
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
@@ -47,6 +48,8 @@ export default function Isps() {
     refetch();
     if (isEditRoute && editId) {
       navigate(`/isps/${editId}`, { replace: true });
+    } else if (isCreateRoute) {
+      navigate('/isps', { replace: true });
     }
   };
 
@@ -58,14 +61,17 @@ export default function Isps() {
   });
 
   useEffect(() => {
-    if (isEditRoute && editId && editIspData?.data?.data) {
+    if (isCreateRoute) {
+      setEditingIsp(null);
+      setFormModalOpen(true);
+    } else if (isEditRoute && editId && editIspData?.data?.data) {
       setEditingIsp(editIspData.data.data);
       setFormModalOpen(true);
-    } else if (!isEditRoute) {
+    } else if (!isEditRoute && !isCreateRoute) {
       setFormModalOpen(false);
       setEditingIsp(null);
     }
-  }, [isEditRoute, editId, editIspData]);
+  }, [isCreateRoute, isEditRoute, editId, editIspData]);
 
   const handleDelete = async () => {
     if (!ispToDelete) return;
@@ -159,7 +165,7 @@ export default function Isps() {
           <h1 className="text-2xl font-bold text-gray-900">ISPs</h1>
           <p className="text-gray-600 mt-1">Manage Internet Service Provider directory</p>
         </div>
-        <button onClick={() => { setEditingIsp(null); setFormModalOpen(true); }} className="btn btn-primary">
+        <button onClick={() => navigate('/isps/new')} className="btn btn-primary">
           <Plus className="w-4 h-4 mr-2" />
           Add ISP
         </button>

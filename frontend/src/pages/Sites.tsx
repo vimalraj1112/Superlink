@@ -16,6 +16,7 @@ export default function Sites() {
   const navigate = useNavigate();
   const location = useLocation();
   const isEditRoute = /^\/sites\/[^/]+\/edit\/?$/.test(location.pathname);
+  const isCreateRoute = /^\/sites\/new\/?$/.test(location.pathname);
   const editId = isEditRoute ? location.pathname.split('/')[2] : null;
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
@@ -64,20 +65,25 @@ export default function Sites() {
   });
 
   useEffect(() => {
-    if (isEditRoute && editId && editSiteData?.data?.data) {
+    if (isCreateRoute) {
+      setEditingSite(null);
+      setFormModalOpen(true);
+    } else if (isEditRoute && editId && editSiteData?.data?.data) {
       setEditingSite(editSiteData.data.data);
       setFormModalOpen(true);
-    } else if (!isEditRoute) {
+    } else if (!isEditRoute && !isCreateRoute) {
       setFormModalOpen(false);
       setEditingSite(null);
     }
-  }, [isEditRoute, editId, editSiteData]);
+  }, [isCreateRoute, isEditRoute, editId, editSiteData]);
 
   const handleFormClose = () => {
     setFormModalOpen(false);
     setEditingSite(null);
     if (isEditRoute && editId) {
       navigate(`/sites/${editId}`, { replace: true });
+    } else if (isCreateRoute) {
+      navigate('/sites', { replace: true });
     }
   };
 
@@ -183,7 +189,7 @@ export default function Sites() {
           <h1 className="text-2xl font-bold text-gray-900">Sites</h1>
           <p className="text-gray-600 mt-1">Manage customer internet sites and renewals</p>
         </div>
-        <button onClick={() => { setEditingSite(null); setFormModalOpen(true); }} className="btn btn-primary">
+        <button onClick={() => navigate('/sites/new')} className="btn btn-primary">
           <Plus className="w-4 h-4 mr-2" />
           Add Site
         </button>

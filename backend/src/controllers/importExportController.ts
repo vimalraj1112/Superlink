@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/config/db';
 import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
-import { sendSuccess, sendError } from '@/utils/apiResponse';
+import { sendSuccess, sendError, sendValidationError } from '@/utils/apiResponse';
 import * as XLSX from 'xlsx';
 
 // Validation schemas
@@ -634,7 +634,14 @@ export const executeImportSites = asyncHandler(async (req: AuthenticatedRequest,
 
 // Download import template
 export const downloadTemplate = asyncHandler(async (req: Request, res: Response) => {
-  const { type } = req.query;
+  // The route is defined as /template/:type, so read the path param (with the
+  // query string kept as a fallback for older callers).
+  const type = (req.params.type ?? req.query.type) as string | undefined;
+
+  if (!type || !['customers', 'sites', 'payments'].includes(type)) {
+    sendValidationError(res, `Unsupported template type: ${type ?? '(missing)'}`);
+    return;
+  }
 
   const workbook = XLSX.utils.book_new();
 

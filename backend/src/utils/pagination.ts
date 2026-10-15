@@ -26,8 +26,12 @@ export function getSearchQuery(req: Request): string | undefined {
 }
 
 export function getDateRange(req: Request): { startDate?: Date; endDate?: Date } {
-  const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
-  const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+  // Accept both legacy (startDate/endDate) and frontend (dateFrom/dateTo) names
+  const startRaw = req.query.startDate ?? req.query.dateFrom;
+  const endRaw = req.query.endDate ?? req.query.dateTo;
+
+  const startDate = startRaw ? new Date(startRaw as string) : undefined;
+  const endDate = endRaw ? new Date(endRaw as string) : undefined;
 
   return {
     startDate: startDate && !Number.isNaN(startDate.getTime()) ? startDate : undefined,

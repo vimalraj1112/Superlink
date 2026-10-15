@@ -147,22 +147,30 @@ export const updateQuotation = asyncHandler(async (req: AuthenticatedRequest, re
     return;
   }
 
-  // Update quotation and items
+  // Update quotation and items. Existing line items are only replaced when the
+  // request actually carries new items - otherwise a partial update (e.g. just
+  // a status change) would wipe them.
   const quotation = await prisma.$transaction(async (tx) => {
-    // Delete existing items and create new ones
-    await tx.quotationItem.deleteMany({ where: { quotationId: id } });
+    if (items !== undefined) {
+      // Delete existing items and create new ones
+      await tx.quotationItem.deleteMany({ where: { quotationId: id } });
+    }
 
     return tx.quotation.update({
       where: { id },
       data: {
         ...quotationData,
         validityDate: quotationData.validityDate ? new Date(quotationData.validityDate) : undefined,
-        items: {
-          create: items?.map((item: any, index: number) => ({
-            ...item,
-            sortOrder: item.sortOrder ?? index,
-          })) ?? [],
-        },
+        ...(items !== undefined
+          ? {
+              items: {
+                create: items?.map((item: any, index: number) => ({
+                  ...item,
+                  sortOrder: item.sortOrder ?? index,
+                })) ?? [],
+              },
+            }
+          : {}),
       },
       include: {
         customer: { select: { id: true, companyName: true } },
