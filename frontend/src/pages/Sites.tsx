@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Filter, ChevronDown, ChevronUp, Eye, Edit, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -14,6 +14,9 @@ import { toast } from 'sonner';
 
 export default function Sites() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isEditRoute = /^\/sites\/[^/]+\/edit\/?$/.test(location.pathname);
+  const editId = isEditRoute ? location.pathname.split('/')[2] : null;
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [search, setSearch] = useState('');
@@ -52,6 +55,31 @@ export default function Sites() {
     queryKey: ['site-filter-isps'],
     queryFn: () => ispApi.list({ limit: 100, sortBy: 'name', sortOrder: 'asc' }),
   });
+
+  // Load the site and open the edit modal when navigated to /sites/:id/edit
+  const { data: editSiteData } = useQuery({
+    queryKey: ['edit-site', editId],
+    queryFn: () => siteApi.get(editId!),
+    enabled: isEditRoute && !!editId,
+  });
+
+  useEffect(() => {
+    if (isEditRoute && editId && editSiteData?.data?.data) {
+      setEditingSite(editSiteData.data.data);
+      setFormModalOpen(true);
+    } else if (!isEditRoute) {
+      setFormModalOpen(false);
+      setEditingSite(null);
+    }
+  }, [isEditRoute, editId, editSiteData]);
+
+  const handleFormClose = () => {
+    setFormModalOpen(false);
+    setEditingSite(null);
+    if (isEditRoute && editId) {
+      navigate(`/sites/${editId}`, { replace: true });
+    }
+  };
 
   const handleDelete = async () => {
     if (!siteToDelete) return;
@@ -256,7 +284,7 @@ export default function Sites() {
 
       <SiteForm
         isOpen={formModalOpen}
-        onClose={() => { setFormModalOpen(false); setEditingSite(null); }}
+        onClose={handleFormClose}
         initialData={editingSite}
       />
     </div>

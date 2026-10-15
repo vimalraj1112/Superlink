@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Filter, ChevronDown, ChevronUp, Eye, Edit, Trash2, Wifi, MapPin, Building2 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 
 export default function Isps() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isEditRoute = /^\/isps\/[^/]+\/edit\/?$/.test(location.pathname);
+  const editId = isEditRoute ? location.pathname.split('/')[2] : null;
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [search, setSearch] = useState('');
@@ -42,7 +45,27 @@ export default function Isps() {
     setFormModalOpen(false);
     setEditingIsp(null);
     refetch();
+    if (isEditRoute && editId) {
+      navigate(`/isps/${editId}`, { replace: true });
+    }
   };
+
+  // Load the ISP and open the edit modal when navigated to /isps/:id/edit
+  const { data: editIspData } = useQuery({
+    queryKey: ['edit-isp', editId],
+    queryFn: () => ispApi.get(editId!),
+    enabled: isEditRoute && !!editId,
+  });
+
+  useEffect(() => {
+    if (isEditRoute && editId && editIspData?.data?.data) {
+      setEditingIsp(editIspData.data.data);
+      setFormModalOpen(true);
+    } else if (!isEditRoute) {
+      setFormModalOpen(false);
+      setEditingIsp(null);
+    }
+  }, [isEditRoute, editId, editIspData]);
 
   const handleDelete = async () => {
     if (!ispToDelete) return;

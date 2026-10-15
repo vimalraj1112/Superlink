@@ -21,6 +21,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!initialData;
+  const targetId = initialData?.id || id;
 
   const [formData, setFormData] = useState({
     siteCode: '',
@@ -190,11 +191,11 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: typeof formData }) => siteApi.update(id, data),
-    onSuccess: (response) => {
+    onSuccess: (response, variables) => {
       if (response.data.success) {
         toast.success('Site updated successfully');
         queryClient.invalidateQueries({ queryKey: ['sites'] });
-        queryClient.invalidateQueries({ queryKey: ['site', id] });
+        queryClient.invalidateQueries({ queryKey: ['site', variables.id] });
         onClose();
       } else {
         toast.error(response.data.message || 'Failed to update site');
@@ -245,8 +246,8 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     // Remove empty siteCode for auto-generation on create
     if (!submitData.siteCode) delete submitData.siteCode;
 
-    if (isEditing && id) {
-      updateMutation.mutate({ id, data: submitData });
+    if (isEditing && targetId) {
+      updateMutation.mutate({ id: targetId, data: submitData });
     } else {
       createMutation.mutate(submitData);
     }

@@ -19,6 +19,7 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!initialData;
+  const targetId = initialData?.id || id;
 
   const [formData, setFormData] = useState<{
     customerCode?: string;
@@ -196,11 +197,11 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: typeof formData }) => customerApi.update(id, data),
-    onSuccess: (response) => {
+    onSuccess: (response, variables) => {
       if (response.data.success) {
         toast.success('Customer updated successfully');
         queryClient.invalidateQueries({ queryKey: ['customers'] });
-        queryClient.invalidateQueries({ queryKey: ['customer', id] });
+        queryClient.invalidateQueries({ queryKey: ['customer', variables.id] });
         onClose();
       } else {
         toast.error(response.data.message || 'Failed to update customer');
@@ -225,8 +226,8 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
       delete submitData.customerCode;
     }
 
-    if (isEditing && id) {
-      updateMutation.mutate({ id, data: submitData });
+    if (isEditing && targetId) {
+      updateMutation.mutate({ id: targetId, data: submitData });
     } else {
       createMutation.mutate(submitData);
     }

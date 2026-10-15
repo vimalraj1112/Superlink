@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Plus, Search, Filter, ChevronDown, ChevronUp, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
 import { clsx } from 'clsx';
 import { customerApi } from '@/api/endpoints';
@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 
 export default function Customers() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isEditRoute = /^\/customers\/[^/]+\/edit\/?$/.test(location.pathname);
+  const editId = isEditRoute ? location.pathname.split('/')[2] : null;
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
   const [search, setSearch] = useState('');
@@ -31,6 +34,31 @@ export default function Customers() {
     queryFn: () => customerApi.list({ page, limit, search, isActive: isActiveFilter, sortBy, sortOrder }),
     placeholderData: (previousData) => previousData,
   });
+
+  // Load the customer and open the edit modal when navigated to /customers/:id/edit
+  const { data: editCustomerData } = useQuery({
+    queryKey: ['edit-customer', editId],
+    queryFn: () => customerApi.get(editId!),
+    enabled: isEditRoute && !!editId,
+  });
+
+  useEffect(() => {
+    if (isEditRoute && editId && editCustomerData?.data?.data) {
+      setEditingCustomer(editCustomerData.data.data);
+      setFormModalOpen(true);
+    } else if (!isEditRoute) {
+      setFormModalOpen(false);
+      setEditingCustomer(null);
+    }
+  }, [isEditRoute, editId, editCustomerData]);
+
+  const handleFormClose = () => {
+    setFormModalOpen(false);
+    setEditingCustomer(null);
+    if (isEditRoute && editId) {
+      navigate(`/customers/${editId}`, { replace: true });
+    }
+  };
 
   const columns = [
     {
@@ -264,7 +292,7 @@ export default function Customers() {
 
       <CustomerForm
         isOpen={formModalOpen}
-        onClose={() => { setFormModalOpen(false); setEditingCustomer(null); }}
+        onClose={handleFormClose}
         initialData={editingCustomer}
       />
     </div>
