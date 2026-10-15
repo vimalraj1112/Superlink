@@ -141,7 +141,7 @@ function DataTable<T>({
 
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-brand-50/60 border-b border-brand-100">
+          <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
               {columns.map(column => (
                 <th
@@ -149,7 +149,7 @@ function DataTable<T>({
                   className={clsx(
                     'px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider',
                     column.headerClassName,
-                    column.sortable !== false && sortable && 'cursor-pointer select-none hover:bg-brand-100'
+                    column.sortable !== false && sortable && 'cursor-pointer select-none hover:bg-slate-100'
                   )}
                   onClick={() => handleSort(column.key)}
                 >
@@ -173,8 +173,8 @@ function DataTable<T>({
                 <tr
                   key={getRowKey(row)}
                   className={clsx(
-                    onRowClick && 'cursor-pointer hover:bg-brand-50 transition-colors',
-                    index % 2 === 0 ? 'bg-white' : 'bg-brand-50/60'
+                    onRowClick && 'cursor-pointer hover:bg-slate-50 transition-colors',
+                    index % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'
                   )}
                   onClick={() => onRowClick?.(row)}
                 >

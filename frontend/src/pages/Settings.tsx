@@ -273,7 +273,7 @@ export default function Settings() {
                   { key: 'paymentAlert', label: 'Payment Alerts', desc: 'Get notified about new payments' },
                   { key: 'soundEnabled', label: 'Sound Notifications', desc: 'Play sound on new alerts' },
                 ].map(item => (
-                  <div key={item.key} className="flex items-center justify-between p-4 bg-brand-50/60 rounded-lg">
+                  <div key={item.key} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
                     <div>
                       <p className="font-medium text-gray-900">{item.label}</p>
                       <p className="text-sm text-gray-600">{item.desc}</p>
@@ -303,7 +303,7 @@ export default function Settings() {
             <div className="max-w-2xl space-y-6">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Telegram Integration</h2>
-                <div className="p-4 bg-brand-50/60 rounded-lg">
+                <div className="p-4 bg-slate-50 rounded-lg">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -343,7 +343,7 @@ export default function Settings() {
 
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Database & System</h2>
-                <div className="p-4 bg-brand-50/60 rounded-lg">
+                <div className="p-4 bg-slate-50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">

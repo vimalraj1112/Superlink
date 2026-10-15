@@ -250,7 +250,7 @@ export default function Users() {
         </div>
 
         {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-brand-50/60 flex flex-col sm:flex-row gap-4 flex-wrap">
+          <div className="p-4 border-b border-gray-200 bg-slate-50 flex flex-col sm:flex-row gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700">Role:</label>
               <select
@@ -457,7 +457,7 @@ function UserForm({ editingUser, roles, onSubmit, onCancel, isSubmitting }: User
 
         {/* Role Access Catalog */}
         <div className="md:col-span-2">
-          <div className="bg-brand-50/60 border border-gray-200 rounded-lg p-3">
+          <div className="bg-slate-50 border border-gray-200 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-brand-600" />

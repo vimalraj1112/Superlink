@@ -257,7 +257,7 @@ export default function PaymentForm() {
                             setFormData(prev => ({ ...prev, customerId: customer.id }));
                             setShowCustomerSearch(false);
                           }}
-                          className="w-full p-4 text-left hover:bg-brand-50 transition-colors"
+                          className="w-full p-4 text-left hover:bg-slate-50 transition-colors"
                         >
                           <p className="font-medium text-gray-900">{customer.companyName}</p>
                           <p className="text-sm text-gray-500">{customer.customerCode} • {customer.contactPerson} • {customer.city}</p>
@@ -315,7 +315,7 @@ export default function PaymentForm() {
                 type="text"
                 value=""
                 readOnly
-                className="input bg-brand-100/60 cursor-not-allowed"
+                className="input bg-slate-100 cursor-not-allowed"
                 placeholder="Select a customer first"
               />
             </div>

@@ -94,14 +94,14 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
 
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-50 bg-brand-50/60 border-r border-brand-100 transition-all duration-300 flex flex-col h-screen overflow-hidden',
+          'fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-slate-200 transition-all duration-300 flex flex-col h-screen overflow-hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           sidebarWidth
         )}
         aria-label="Main navigation"
       >
         {/* Logo & Toggle */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-brand-100">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200">
           {!collapsed && (
             <Link to="/dashboard" className="btn btn-ghost btn-sm flex items-center gap-3" aria-label="SuperLink Dashboard">
               <img src={logo} alt="SuperLink" className="w-8 h-8 flex-shrink-0" />
@@ -141,7 +141,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
             return (
               <div key={section.title} className="space-y-1">
                 {!collapsed && (
-                  <h3 className="px-3 py-1.5 text-xs font-semibold text-brand-600 uppercase tracking-wider">
+                  <h3 className="px-3 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     {section.title}
                   </h3>
                 )}
@@ -157,7 +157,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                         isActive
                           ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/30'
-                          : 'text-gray-700 hover:bg-brand-100 hover:text-brand-900',
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                         collapsed && 'justify-center'
                       )}
                       title={collapsed ? item.name : undefined}
@@ -174,7 +174,7 @@ export default function Sidebar({ isOpen, onClose, collapsed, onToggleCollapse }
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-brand-100">
+        <div className="p-4 border-t border-slate-200">
           {!collapsed && (
             <div className="text-xs text-center text-gray-500">
               SuperLink CRM v1.0.0

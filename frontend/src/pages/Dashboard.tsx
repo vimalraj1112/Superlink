@@ -167,7 +167,7 @@ export default function Dashboard() {
     OPEN: 'bg-orange-100 text-orange-700 border-orange-200',
     IN_PROGRESS: 'bg-blue-100 text-blue-700 border-blue-200',
     RESOLVED: 'bg-green-100 text-green-700 border-green-200',
-    CLOSED: 'bg-brand-100/60 text-gray-700 border-gray-200',
+    CLOSED: 'bg-slate-100 text-gray-700 border-gray-200',
   };
 
   const statusIcons: Record<string, React.ElementType> = {
@@ -265,7 +265,7 @@ export default function Dashboard() {
             onClick={() => window.location.href = `/tickets?status=${status}`}
             className={clsx(
               'card p-4 text-left hover:shadow-md transition-shadow',
-              statusColors[status] || 'bg-brand-50/60 text-gray-700 border-gray-200'
+              statusColors[status] || 'bg-slate-50 text-gray-700 border-gray-200'
             )}
           >
             <p className="text-sm text-gray-600">{TicketStatusLabels[status]}</p>
@@ -295,7 +295,7 @@ export default function Dashboard() {
                 <Link
                   key={ticket.id}
                   to={`/tickets/${ticket.id}`}
-                  className="block p-4 hover:bg-brand-50 transition-colors"
+                  className="block p-4 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">

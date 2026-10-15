@@ -273,7 +273,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
                 <input
                   type="text"
                   value="Auto-generated"
-                  className="input bg-brand-50/60"
+                  className="input bg-slate-50"
                   disabled
                 />
               </div>

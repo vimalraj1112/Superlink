@@ -254,7 +254,7 @@ export default function CustomerForm({ isOpen, onClose, initialData }: CustomerF
                 <input
                   type="text"
                   value="Auto-generated"
-                  className="input bg-brand-50/60"
+                  className="input bg-slate-50"
                   disabled
                 />
               </div>

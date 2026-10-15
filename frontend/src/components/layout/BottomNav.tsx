@@ -41,7 +41,7 @@ export default function BottomNav() {
   const showMore = filteredMore.length > 0;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-brand-50/80 backdrop-blur-sm border-t border-brand-100 lg:hidden z-40" aria-label="Mobile bottom navigation">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/85 backdrop-blur-md border-t border-slate-200 lg:hidden z-40" aria-label="Mobile bottom navigation">
       <div className="flex justify-around">
         {filteredMain.map(item => {
           const Icon = item.icon;
@@ -98,7 +98,7 @@ export default function BottomNav() {
                         onClick={() => setIsOpen(false)}
                         className={clsx(
                           'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                          isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-brand-100'
+                          isActive ? 'bg-primary-50 text-primary-700' : 'text-gray-600 hover:bg-slate-100'
                         )}
                       >
                         <Icon className="w-5 h-5" aria-hidden="true" />

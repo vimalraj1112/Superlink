@@ -205,7 +205,7 @@ export default function Profile() {
                       id="email"
                       type="email"
                       value={formData.email}
-                      className="input bg-brand-50/60"
+                      className="input bg-slate-50"
                       disabled
                     />
                     <p className="text-xs text-gray-500 mt-1">Email cannot be changed. Contact admin if needed.</p>
@@ -227,7 +227,7 @@ export default function Profile() {
                       id="role"
                       type="text"
                       value={profileUser?.role?.name}
-                      className="input bg-brand-50/60"
+                      className="input bg-slate-50"
                       disabled
                     />
                   </div>
@@ -335,7 +335,7 @@ export default function Profile() {
           <div className="card p-6 mt-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Information</h3>
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-brand-50/60 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                     <Lock className="w-5 h-5 text-blue-600" />
@@ -347,7 +347,7 @@ export default function Profile() {
                 </div>
                 <button className="btn btn-secondary text-sm">Enable</button>
               </div>
-              <div className="flex items-center justify-between p-3 bg-brand-50/60 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-green-600" />

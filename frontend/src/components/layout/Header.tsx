@@ -84,7 +84,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   };
 
   return (
-    <header className="h-16 bg-brand-50/80 backdrop-blur-sm border-b border-brand-100 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
+    <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shadow-sm">
       <div className="flex items-center gap-4 flex-1">
         <button
           onClick={onMenuClick}
@@ -136,8 +136,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
           </button>
 
           {bellOpen && (
-            <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-brand-100 z-50 overflow-hidden">
-              <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-brand-100 bg-brand-50/60">
+            <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+              <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200 bg-slate-50">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold text-gray-900 text-sm">Notifications</span>
                   {unreadCount > 0 && (
@@ -174,8 +174,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
                         key={notification.id}
                         onClick={() => openNotification(notification)}
                         className={clsx(
-                          'flex gap-3 px-4 py-3 border-b border-brand-50 cursor-pointer transition-colors hover:bg-brand-50/70',
-                          !notification.read && 'bg-brand-50/50'
+                          'flex gap-3 px-4 py-3 border-b border-slate-100 cursor-pointer transition-colors hover:bg-slate-50',
+                          !notification.read && 'bg-slate-50'
                         )}
                       >
                         <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -212,7 +212,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               {notifications.length > 0 && (
                 <button
                   onClick={clearAll}
-                  className="w-full px-4 py-2.5 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 flex items-center justify-center gap-1.5 border-t border-brand-100"
+                  className="w-full px-4 py-2.5 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 flex items-center justify-center gap-1.5 border-t border-slate-200"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Clear all
@@ -222,7 +222,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           )}
         </div>
 
-        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-brand-100">
+        <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-200">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/25">
             <User className="w-5 h-5 text-white" />
           </div>

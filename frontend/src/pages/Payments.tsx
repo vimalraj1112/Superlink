@@ -22,7 +22,7 @@ const paymentTypeColors: Record<string, string> = {
   OTC: 'bg-blue-100 text-blue-800',
   MRC: 'bg-green-100 text-green-800',
   STATIC_IP: 'bg-purple-100 text-purple-800',
-  OTHER: 'bg-brand-100/60 text-gray-800',
+  OTHER: 'bg-slate-100 text-gray-800',
 };
 
 export default function Payments() {
@@ -79,7 +79,7 @@ export default function Payments() {
       header: 'Type',
       sortable: true,
       render: (row: Payment) => (
-        <span className={clsx('badge', paymentTypeColors[row.type] || 'bg-brand-100/60 text-gray-800')}>
+        <span className={clsx('badge', paymentTypeColors[row.type] || 'bg-slate-100 text-gray-800')}>
           {paymentTypeLabels[row.type] || row.type}
         </span>
       ),
@@ -204,7 +204,7 @@ export default function Payments() {
         </div>
 
         {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-brand-50/60 flex flex-col sm:flex-row gap-4">
+          <div className="p-4 border-b border-gray-200 bg-slate-50 flex flex-col sm:flex-row gap-4">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700">Type:</label>
               <select

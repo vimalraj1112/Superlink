@@ -221,7 +221,7 @@ export default function Sites() {
         </div>
 
         {showFilters && (
-          <div className="p-4 border-b border-gray-200 bg-brand-50/60 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 border-b border-gray-200 bg-slate-50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <select value={status} onChange={e => { setStatus(e.target.value as SiteStatus | ''); setPage(1); }} className="input text-sm">
               <option value="">All Statuses</option>
               {Object.values(SiteStatus).map(value => (

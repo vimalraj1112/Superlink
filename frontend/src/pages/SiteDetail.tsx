@@ -289,19 +289,19 @@ export default function SiteDetail() {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 bg-brand-50/60 rounded-lg">
+                <div className="p-4 bg-slate-50 rounded-lg">
                   <p className="text-sm text-gray-600">ISP</p>
                   <p className="font-medium text-gray-900">{site.isp?.displayName || site.isp?.name || '-'}</p>
                 </div>
-                <div className="p-4 bg-brand-50/60 rounded-lg">
+                <div className="p-4 bg-slate-50 rounded-lg">
                   <p className="text-sm text-gray-600">MRC</p>
                   <p className="font-medium text-gray-900">₹{Number(site.mrc || 0).toLocaleString()}</p>
                 </div>
-                <div className="p-4 bg-brand-50/60 rounded-lg">
+                <div className="p-4 bg-slate-50 rounded-lg">
                   <p className="text-sm text-gray-600">OTC</p>
                   <p className="font-medium text-gray-900">₹{Number(site.otc || 0).toLocaleString()}</p>
                 </div>
-                <div className="p-4 bg-brand-50/60 rounded-lg">
+                <div className="p-4 bg-slate-50 rounded-lg">
                   <p className="text-sm text-gray-600">Static IP Charge</p>
                   <p className="font-medium text-gray-900">₹{Number(site.staticIpCharge || 0).toLocaleString()}</p>
                 </div>
@@ -321,7 +321,7 @@ export default function SiteDetail() {
                   )}
                 </div>
                 <div className="space-y-3">
-                  <div className="p-4 bg-brand-50/60 rounded-lg">
+                  <div className="p-4 bg-slate-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                         <Calendar className="w-5 h-5 text-blue-600" />
@@ -334,7 +334,7 @@ export default function SiteDetail() {
                       </div>
                     </div>
                   </div>
-                  <div className="p-4 bg-brand-50/60 rounded-lg">
+                  <div className="p-4 bg-slate-50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
                         <DollarSign className="w-5 h-5 text-green-600" />
@@ -348,7 +348,7 @@ export default function SiteDetail() {
                     </div>
                   </div>
                   {site.connectionType && (
-                    <div className="p-4 bg-brand-50/60 rounded-lg">
+                    <div className="p-4 bg-slate-50 rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
                           <Settings className="w-5 h-5 text-purple-600" />
@@ -361,9 +361,9 @@ export default function SiteDetail() {
                     </div>
                   )}
                   {site.circuitId && (
-                    <div className="p-4 bg-brand-50/60 rounded-lg">
+                    <div className="p-4 bg-slate-50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-brand-100/60 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
                           <Hash className="w-5 h-5 text-gray-600" />
                         </div>
                         <div>
@@ -431,7 +431,7 @@ export default function SiteDetail() {
             <div>
               {credentials ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-brand-50/60 rounded-lg">
+                  <div className="p-4 bg-slate-50 rounded-lg">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Router Credentials</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {credentials.username && (
@@ -500,7 +500,7 @@ export default function SiteDetail() {
                       )}
                     </div>
                   </div>
-                  <div className="p-4 bg-brand-50/60 rounded-lg">
+                  <div className="p-4 bg-slate-50 rounded-lg">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">PPPoE Credentials</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {credentials.pppoeUsername && (
@@ -552,13 +552,13 @@ export default function SiteDetail() {
                     </div>
                   </div>
                   {credentials.staticIps && (
-                    <div className="p-4 bg-brand-50/60 rounded-lg">
+                    <div className="p-4 bg-slate-50 rounded-lg">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Static IPs</h3>
                       <pre className="text-sm text-gray-900 bg-white p-3 rounded border">{JSON.stringify(credentials.staticIps, null, 2)}</pre>
                     </div>
                   )}
                   {credentials.notes && (
-                    <div className="p-4 bg-brand-50/60 rounded-lg">
+                    <div className="p-4 bg-slate-50 rounded-lg">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes</h3>
                       <p className="text-gray-600 whitespace-pre-wrap">{credentials.notes}</p>
                     </div>
