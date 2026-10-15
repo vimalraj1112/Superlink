@@ -35,8 +35,10 @@ router.get('/:id/messages', requirePermission({ resource: 'tickets', actions: ['
 // Create ticket - needs tickets:create
 router.post('/', requirePermission({ resource: 'tickets', actions: ['create'] }), validate(ticketCreateSchema), createTicket);
 
-// Update ticket - needs tickets:update
-router.put('/:id', requirePermission({ resource: 'tickets', actions: ['update'] }), validate(ticketUpdateSchema), updateTicket);
+// Update ticket - needs tickets:update (accepts PUT and PATCH)
+router.route('/:id')
+  .put(requirePermission({ resource: 'tickets', actions: ['update'] }), validate(ticketUpdateSchema), updateTicket)
+  .patch(requirePermission({ resource: 'tickets', actions: ['update'] }), validate(ticketUpdateSchema), updateTicket);
 
 // Delete ticket - needs tickets:delete
 router.delete('/:id', requirePermission({ resource: 'tickets', actions: ['delete'] }), deleteTicket);

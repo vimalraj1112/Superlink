@@ -26,8 +26,10 @@ router.get('/:id', requirePermission({ resource: 'isps', actions: ['read'] }), g
 // Create ISP - needs isps:create
 router.post('/', requirePermission({ resource: 'isps', actions: ['create'] }), validate(ispCreateSchema), createIsp);
 
-// Update ISP - needs isps:update
-router.put('/:id', requirePermission({ resource: 'isps', actions: ['update'] }), validate(ispUpdateSchema), updateIsp);
+// Update ISP - needs isps:update (accepts PUT and PATCH)
+router.route('/:id')
+  .put(requirePermission({ resource: 'isps', actions: ['update'] }), validate(ispUpdateSchema), updateIsp)
+  .patch(requirePermission({ resource: 'isps', actions: ['update'] }), validate(ispUpdateSchema), updateIsp);
 
 // Delete (deactivate) ISP - needs isps:delete
 router.delete('/:id', requirePermission({ resource: 'isps', actions: ['delete'] }), deleteIsp);

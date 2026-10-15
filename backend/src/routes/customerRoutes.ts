@@ -26,8 +26,10 @@ router.get('/:id', requirePermission({ resource: 'customers', actions: ['read'] 
 // Create customer - needs customers:create
 router.post('/', requirePermission({ resource: 'customers', actions: ['create'] }), validate(customerCreateSchema), createCustomer);
 
-// Update customer - needs customers:update
-router.put('/:id', requirePermission({ resource: 'customers', actions: ['update'] }), validate(customerUpdateSchema), updateCustomer);
+// Update customer - needs customers:update (accepts PUT and PATCH)
+router.route('/:id')
+  .put(requirePermission({ resource: 'customers', actions: ['update'] }), validate(customerUpdateSchema), updateCustomer)
+  .patch(requirePermission({ resource: 'customers', actions: ['update'] }), validate(customerUpdateSchema), updateCustomer);
 
 // Delete (deactivate) customer - needs customers:delete
 router.delete('/:id', requirePermission({ resource: 'customers', actions: ['delete'] }), deleteCustomer);

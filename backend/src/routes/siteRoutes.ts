@@ -30,8 +30,10 @@ router.get('/:id', requirePermission({ resource: 'sites', actions: ['read'] }), 
 // Create site - needs sites:create
 router.post('/', requirePermission({ resource: 'sites', actions: ['create'] }), validate(siteCreateSchema), createSite);
 
-// Update site - needs sites:update
-router.put('/:id', requirePermission({ resource: 'sites', actions: ['update'] }), validate(siteUpdateSchema), updateSite);
+// Update site - needs sites:update (accepts PUT and PATCH)
+router.route('/:id')
+  .put(requirePermission({ resource: 'sites', actions: ['update'] }), validate(siteUpdateSchema), updateSite)
+  .patch(requirePermission({ resource: 'sites', actions: ['update'] }), validate(siteUpdateSchema), updateSite);
 
 // Delete (disconnect) site - needs sites:delete
 router.delete('/:id', requirePermission({ resource: 'sites', actions: ['delete'] }), deleteSite);
