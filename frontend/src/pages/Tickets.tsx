@@ -226,7 +226,7 @@ export default function Tickets() {
               setShowFilters(true);
             }}
             className={clsx(
-              'card p-4 text-left hover:shadow-md transition-shadow',
+              'card card-interactive p-4 text-left',
               status === value && 'ring-2 ring-primary-500'
             )}
           >

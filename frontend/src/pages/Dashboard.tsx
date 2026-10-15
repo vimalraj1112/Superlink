@@ -22,7 +22,6 @@ interface StatCardProps {
   title: string;
   value: number;
   icon: React.ElementType;
-  accent: string;
   link: string;
   subtitle?: string;
   delay?: number;
@@ -69,14 +68,14 @@ function useCountUp(target: number, duration = 850) {
   return value;
 }
 
-function StatCard({ title, value, icon: Icon, accent, link, subtitle, delay = 0 }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, link, subtitle, delay = 0 }: StatCardProps) {
   const count = useCountUp(value);
 
   return (
     <Link
       to={link}
       style={{ '--card-delay': `${delay}ms` } as React.CSSProperties}
-      className="card card-shine group p-5"
+      className="card card-enter card-interactive card-shine group p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -86,16 +85,10 @@ function StatCard({ title, value, icon: Icon, accent, link, subtitle, delay = 0 
           </p>
           {subtitle && <p className="mt-1 text-sm text-gray-400">{subtitle}</p>}
         </div>
-        <div className="relative shrink-0">
-          <span
-            aria-hidden="true"
-            className={`absolute inset-0 rounded-xl bg-gradient-to-br ${accent} opacity-40 blur-md transition-opacity duration-500 group-hover:opacity-75`}
-          />
-          <div
-            className={`relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-[#ffffff] shadow-lg shadow-brand-500/20 transition-transform duration-500 group-hover:-rotate-3 group-hover:scale-110`}
-          >
-            <Icon className="h-6 w-6" />
-          </div>
+        <div
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100 transition-transform duration-300 group-hover:scale-105"
+        >
+          <Icon className="h-6 w-6" />
         </div>
       </div>
     </Link>
@@ -224,7 +217,6 @@ export default function Dashboard() {
           title="Customers"
           value={totalCustomers}
           icon={Users}
-          accent="from-teal-400 to-cyan-600"
           link="/customers"
           subtitle="Total clients"
           delay={0}
@@ -233,7 +225,6 @@ export default function Dashboard() {
           title="Sites"
           value={totalSites}
           icon={MapPin}
-          accent="from-emerald-400 to-teal-600"
           link="/sites"
           subtitle="Customer sites"
           delay={80}
@@ -242,7 +233,6 @@ export default function Dashboard() {
           title="Total Tickets"
           value={totalTickets}
           icon={TicketCheck}
-          accent="from-fuchsia-500 to-purple-600"
           link="/tickets"
           subtitle="All tickets"
           delay={160}
@@ -251,7 +241,6 @@ export default function Dashboard() {
           title="ISPs"
           value={totalIsps}
           icon={Wifi}
-          accent="from-sky-400 to-indigo-600"
           link="/isps"
           subtitle="Provider directory"
           delay={240}
@@ -264,7 +253,7 @@ export default function Dashboard() {
             key={status}
             onClick={() => window.location.href = `/tickets?status=${status}`}
             className={clsx(
-              'card p-4 text-left hover:shadow-md transition-shadow',
+              'card card-interactive p-4 text-left',
               statusColors[status] || 'bg-slate-50 text-gray-700 border-gray-200'
             )}
           >

@@ -27,18 +27,6 @@
   --color-primary-900: var(--color-brand-900);
   --color-primary-950: var(--color-brand-950);
 
-  /* Accent colors for status/operations */
-  --color-accent-50: #fdf4ff;
-  --color-accent-100: #fae8ff;
-  --color-accent-500: #d946ef;
-  --color-accent-600: #c026d3;
-
-  /* Surface colors */
-  --color-surface-50: #fafafa;
-  --color-surface-100: #f5f5f5;
-  --color-surface-200: #e5e5e5;
-  --color-surface-300: #d4d4d4;
-
   /* Refined cool-slate neutrals (override Tailwind's default gray) */
   --color-gray-50: #f8fafc;
   --color-gray-100: #f1f5f9;
@@ -62,7 +50,7 @@
     background-color: #e3e9f1;
     background-image:
       radial-gradient(1100px 520px at 100% -8%, rgb(20 184 166 / 0.10), transparent 60%),
-      radial-gradient(900px 480px at -8% 108%, rgb(217 70 239 / 0.08), transparent 60%),
+      radial-gradient(900px 480px at -8% 108%, rgb(6 182 212 / 0.08), transparent 60%),
       linear-gradient(180deg, #e8edf5 0%, #d9e1ec 100%);
     background-attachment: fixed;
     color: var(--color-gray-900);
@@ -259,9 +247,6 @@
   .card {
     position: relative;
     background-color: var(--color-white);
-    background-image:
-      linear-gradient(135deg, rgb(20 184 166 / 0.05) 0%, rgb(255 255 255 / 0) 42%),
-      linear-gradient(315deg, rgb(217 70 239 / 0.045) 0%, rgb(255 255 255 / 0) 38%);
     border-radius: 1rem;
     border: 1px solid var(--color-gray-200);
     box-shadow:
@@ -269,44 +254,32 @@
       0 6px 16px -8px rgb(15 23 42 / 0.10),
       0 16px 40px -24px rgb(13 148 136 / 0.40);
     overflow: hidden;
-    transition:
-      transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-      box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-      border-color 0.35s ease;
+  }
+
+  /* Entrance motion — opt-in, for a card the user lands on (e.g. dashboard KPIs). */
+  .card-enter {
     animation: card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
     animation-delay: var(--card-delay, 0ms);
   }
 
-  /* Gradient accent bar that sweeps in on hover */
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-brand-400), var(--color-brand-600) 45%, var(--color-accent-500));
-    transform: scaleX(0);
-    transform-origin: left center;
-    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-    pointer-events: none;
-    z-index: 2;
+  /* Hover affordance — only on cards that are actually clickable, so static
+     panels don't imply interactivity. A calm lift, no colour shift. */
+  .card-interactive {
+    cursor: pointer;
+    transition:
+      transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .card:hover {
-    transform: translateY(-3px);
-    border-color: var(--color-brand-200);
+  .card-interactive:hover {
+    transform: translateY(-2px);
     box-shadow:
       0 3px 6px -2px rgb(15 23 42 / 0.08),
-      0 10px 24px -12px rgb(15 23 42 / 0.14),
-      0 26px 52px -24px rgb(13 148 136 / 0.48);
+      0 12px 26px -12px rgb(15 23 42 / 0.16),
+      0 28px 56px -26px rgb(13 148 136 / 0.42);
   }
 
-  .card:hover::before {
-    transform: scaleX(1);
-  }
-
-  /* Glossy sheen for interactive / hero cards (opt-in) */
+  /* Glossy sheen for hero / interactive cards (opt-in) */
   .card-shine::after {
     content: '';
     position: absolute;
@@ -510,12 +483,9 @@
   .page-title {
     font-size: 1.875rem;
     font-weight: 800;
+    letter-spacing: -0.02em;
     color: var(--color-gray-900);
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, var(--color-brand-700), var(--color-brand-900));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   .page-subtitle {
@@ -625,15 +595,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card {
+  .card-enter {
     animation: none !important;
   }
 
-  .card:hover {
+  .card-interactive,
+  .card-interactive:hover {
     transform: none;
   }
 
-  .card::before,
   .card-shine::after {
     transition: none !important;
   }
@@ -743,7 +713,7 @@
   background-color: #0a0f16;
   background-image:
     radial-gradient(1100px 520px at 100% -8%, rgb(20 184 166 / 0.1), transparent 60%),
-    radial-gradient(900px 480px at -8% 108%, rgb(217 70 239 / 0.08), transparent 60%),
+    radial-gradient(900px 480px at -8% 108%, rgb(6 182 212 / 0.08), transparent 60%),
     linear-gradient(180deg, #0d1420 0%, #070b12 100%);
 }
 
@@ -789,15 +759,23 @@
     0 10px 28px -16px rgb(0 0 0 / 0.65),
     inset 0 1px 0 0 rgb(255 255 255 / 0.03);
 }
-.dark .card:hover {
+.dark .card-interactive:hover {
   box-shadow:
     0 2px 6px -2px rgb(0 0 0 / 0.5),
     0 20px 44px -20px rgb(0 0 0 / 0.75),
-    0 0 0 1px rgb(45 212 191 / 0.14),
     inset 0 1px 0 0 rgb(255 255 255 / 0.05);
 }
 
 /* The light sheen is far too bright on dark — soften it to a subtle teal sweep */
 .dark .card-shine::after {
   background: linear-gradient(105deg, transparent 38%, rgb(94 234 212 / 0.12) 50%, transparent 62%);
+}
+
+/* Mid-teal (brand-600) is a little dim for text/icons on dark; lift it to
+   brand-400 for accent text while solid fills keep their original value. */
+.dark .text-brand-600 {
+  color: var(--color-brand-400);
+}
+.dark .text-primary-600 {
+  color: var(--color-brand-400);
 }
