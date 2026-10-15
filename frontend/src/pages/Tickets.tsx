@@ -18,6 +18,7 @@ import {
 } from '@/types/enums';
 import { toast } from 'sonner';
 import TicketForm from '@/components/forms/TicketForm';
+import { useTilt } from '@/hooks/useTilt';
 
 export default function Tickets() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function Tickets() {
   const initialStatus = searchParams.get('status') || '';
   const isEditRoute = location.pathname.includes('/edit');
   const editId = isEditRoute ? location.pathname.split('/')[2] : null;
+  const tilt = useTilt();
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(25);
@@ -229,6 +231,7 @@ export default function Tickets() {
               'card card-interactive p-4 text-left',
               status === value && 'ring-2 ring-primary-500'
             )}
+            {...tilt}
           >
             <p className="text-sm text-gray-600">{TicketStatusLabels[value]}</p>
             <div className="mt-2 flex items-center justify-between">

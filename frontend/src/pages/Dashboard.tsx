@@ -17,6 +17,7 @@ import {
   TicketStatusLabels,
 } from '@/types/enums';
 import { clsx } from 'clsx';
+import { useTilt } from '@/hooks/useTilt';
 
 interface StatCardProps {
   title: string;
@@ -25,6 +26,8 @@ interface StatCardProps {
   link: string;
   subtitle?: string;
   delay?: number;
+  /** `warning` tints the icon chip amber — reserved for a metric that needs attention. */
+  tone?: 'brand' | 'warning';
 }
 
 /** Animate a number from its previous value up to the target. */
@@ -68,14 +71,21 @@ function useCountUp(target: number, duration = 850) {
   return value;
 }
 
-function StatCard({ title, value, icon: Icon, link, subtitle, delay = 0 }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, link, subtitle, delay = 0, tone = 'brand' }: StatCardProps) {
   const count = useCountUp(value);
+  const tilt = useTilt();
+
+  const chip =
+    tone === 'warning'
+      ? 'bg-amber-50 text-amber-700 ring-amber-200'
+      : 'bg-brand-50 text-brand-600 ring-brand-100';
 
   return (
     <Link
       to={link}
       style={{ '--card-delay': `${delay}ms` } as React.CSSProperties}
       className="card card-enter card-interactive card-shine group p-5"
+      {...tilt}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -86,7 +96,10 @@ function StatCard({ title, value, icon: Icon, link, subtitle, delay = 0 }: StatC
           {subtitle && <p className="mt-1 text-sm text-gray-400">{subtitle}</p>}
         </div>
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100 transition-transform duration-300 group-hover:scale-105"
+          className={clsx(
+            'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset transition-transform duration-300 group-hover:scale-105',
+            chip
+          )}
         >
           <Icon className="h-6 w-6" />
         </div>
@@ -117,6 +130,7 @@ function useTicketStatusCounts() {
 }
 
 export default function Dashboard() {
+  const tilt = useTilt();
   const { data: customersData } = useQuery({
     queryKey: ['dashboard-customers'],
     queryFn: () => customerApi.list({ limit: 1 }),
@@ -226,7 +240,12 @@ export default function Dashboard() {
           value={totalSites}
           icon={MapPin}
           link="/sites"
-          subtitle="Customer sites"
+          tone={dueRenewals.length > 0 ? 'warning' : 'brand'}
+          subtitle={
+            dueRenewals.length > 0
+              ? `${dueRenewals.length} renewal${dueRenewals.length > 1 ? 's' : ''} due`
+              : 'Customer sites'
+          }
           delay={80}
         />
         <StatCard
@@ -256,6 +275,7 @@ export default function Dashboard() {
               'card card-interactive p-4 text-left',
               statusColors[status] || 'bg-slate-50 text-gray-700 border-gray-200'
             )}
+            {...tilt}
           >
             <p className="text-sm text-gray-600">{TicketStatusLabels[status]}</p>
             <div className="mt-2 flex items-center justify-between">

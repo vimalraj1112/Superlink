@@ -267,12 +267,13 @@
   .card-interactive {
     cursor: pointer;
     transition:
-      transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.18s ease-out,
       box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .card-interactive:hover {
     transform: translateY(-2px);
+    z-index: 1;
     box-shadow:
       0 3px 6px -2px rgb(15 23 42 / 0.08),
       0 12px 26px -12px rgb(15 23 42 / 0.16),
@@ -691,6 +692,7 @@
   --color-yellow-800: #fde68a;
 
   --color-amber-50: #2e2408;
+  --color-amber-200: #4d3d12;
   --color-amber-300: #fcd34d;
   --color-amber-700: #fcd34d;
   --color-amber-900: #fde68a;
