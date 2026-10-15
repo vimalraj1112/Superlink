@@ -13,12 +13,15 @@ import {
   MessageSquare,
   AlertCircle,
   Info,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useSocket } from '@/context/SocketContext';
 import { useNotifications, type AppNotification } from '@/context/NotificationsContext';
+import { useTheme } from '@/context/ThemeContext';
 import logo from '@/assets/ChatGPT Image Aug 5, 2026, 11_31_31 AM.png';
 
 interface HeaderProps {
@@ -48,6 +51,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const { connected, retryCount, reconnectNow } = useSocket();
   const { notifications, unreadCount, markRead, markAllRead, removeNotification, clearAll } =
     useNotifications();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const [bellOpen, setBellOpen] = useState(false);
@@ -117,6 +121,16 @@ export default function Header({ onMenuClick }: HeaderProps) {
           {connected ? 'Live' : retryCount > 0 ? `Reconnecting… (${retryCount})` : 'Offline · Retry'}
         </button>
 
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="btn btn-ghost btn-sm"
+          aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
+        >
+          {resolvedTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+
         {/* Notifications */}
         <div className="relative" ref={bellRef}>
           <button
@@ -129,7 +143,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-none font-bold flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-[#ffffff] text-[10px] leading-none font-bold flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -141,7 +155,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold text-gray-900 text-sm">Notifications</span>
                   {unreadCount > 0 && (
-                    <span className="text-[11px] font-medium text-white bg-red-500 rounded-full px-1.5 py-0.5 leading-none">
+                    <span className="text-[11px] font-medium text-[#ffffff] bg-red-500 rounded-full px-1.5 py-0.5 leading-none">
                       {unreadCount}
                     </span>
                   )}
@@ -223,8 +237,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-200">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/25">
-            <User className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-500 to-[#0f766e] flex items-center justify-center shadow-lg shadow-brand-500/25">
+            <User className="w-5 h-5 text-[#ffffff]" />
           </div>
           <div className="hidden lg:block text-right">
             <div className="text-sm font-medium text-gray-900">

@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { NotificationsProvider } from './context/NotificationsContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { queryClient } from './lib/queryClient';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -83,22 +84,37 @@ function PrivateRoutes() {
   );
 }
 
+function AppShell() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/*" element={<PrivateRoutes />} />
+      </Routes>
+      <Toaster
+        position="top-right"
+        theme={resolvedTheme}
+        toastOptions={{ duration: 4000 }}
+      />
+    </>
+  );
+}
+
 function AppRoutes() {
   return (
     <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SocketProvider>
-            <NotificationsProvider>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/*" element={<PrivateRoutes />} />
-              </Routes>
-              <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
-            </NotificationsProvider>
-          </SocketProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <SocketProvider>
+              <NotificationsProvider>
+                <AppShell />
+              </NotificationsProvider>
+            </SocketProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

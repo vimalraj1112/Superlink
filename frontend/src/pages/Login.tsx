@@ -38,7 +38,7 @@ export default function Login() {
         <div className="card p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-2xl">SL</span>
+              <span className="text-[#ffffff] font-bold text-2xl">SL</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">SuperLink CRM</h1>
             <p className="text-gray-500 mt-1">Sign in to your account</p>

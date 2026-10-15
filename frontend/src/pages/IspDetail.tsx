@@ -236,8 +236,8 @@ export default function IspDetail() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg shadow-brand-500/25 flex-shrink-0">
-            <Wifi className="w-7 h-7 text-white" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-[#0f766e] flex items-center justify-center shadow-lg shadow-brand-500/25 flex-shrink-0">
+            <Wifi className="w-7 h-7 text-[#ffffff]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{isp.displayName || isp.name}</h1>

@@ -92,7 +92,7 @@ function StatCard({ title, value, icon: Icon, accent, link, subtitle, delay = 0 
             className={`absolute inset-0 rounded-xl bg-gradient-to-br ${accent} opacity-40 blur-md transition-opacity duration-500 group-hover:opacity-75`}
           />
           <div
-            className={`relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-white shadow-lg shadow-brand-500/20 transition-transform duration-500 group-hover:-rotate-3 group-hover:scale-110`}
+            className={`relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-[#ffffff] shadow-lg shadow-brand-500/20 transition-transform duration-500 group-hover:-rotate-3 group-hover:scale-110`}
           >
             <Icon className="h-6 w-6" />
           </div>
