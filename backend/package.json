@@ -10,7 +10,10 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:backup": "tsx prisma/backup-data.ts",
+    "db:wipe": "tsx prisma/wipe-data.ts",
+    "db:import-sites": "tsx prisma/import-sites.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

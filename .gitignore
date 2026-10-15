@@ -45,6 +45,10 @@ lerna-debug.log*
 *.sqlite
 *.db
 
+# Local DB backups (contain PII / password hashes)
+backup-*/
+db-backup.json
+
 # OS
 Thumbs.db
 ehthumbs.db
