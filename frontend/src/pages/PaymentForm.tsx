@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, Plus, Search, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Search, X, ImagePlus, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { customerApi, siteApi, paymentApi } from '@/api/endpoints';
 import type { Customer, Site, Payment } from '@/types/models';
@@ -10,6 +10,7 @@ import { PaymentType } from '@/types/enums';
 import { toast } from 'sonner';
 import SearchableSelect from '@/components/common/SearchableSelect';
 import { mapFieldErrors } from '@/components/common/fieldErrors';
+import { fileToCompressedDataUrl, useReceiptPreview, RECEIPT_ACCEPT } from '@/lib/imageUpload';
 
 interface FormData {
   customerId: string;
@@ -22,6 +23,7 @@ interface FormData {
   transactionId: string;
   referenceNumber: string;
   invoiceNumber: string;
+  receiptUrl: string;
   notes: string;
 }
 
@@ -36,6 +38,7 @@ const initialFormData: FormData = {
   transactionId: '',
   referenceNumber: '',
   invoiceNumber: '',
+  receiptUrl: '',
   notes: '',
 };
 
@@ -53,6 +56,10 @@ export default function PaymentForm() {
   const [siteSearch, setSiteSearch] = useState('');
   const [sitePage, setSitePage] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [receiptBusy, setReceiptBusy] = useState(false);
+  const receiptInputRef = useRef<HTMLInputElement>(null);
+
+  const receiptPreview = useReceiptPreview(id, formData.receiptUrl);
 
   // Fetch payment data if editing
   const { data: paymentData, isLoading: paymentLoading } = useQuery({
@@ -90,6 +97,7 @@ export default function PaymentForm() {
         transactionId: payment.transactionId || '',
         referenceNumber: payment.referenceNumber || '',
         invoiceNumber: payment.invoiceNumber || '',
+        receiptUrl: payment.receiptUrl || '',
         notes: payment.notes || '',
       });
       if (payment.customer) {
@@ -148,9 +156,33 @@ export default function PaymentForm() {
       transactionId: formData.transactionId,
       referenceNumber: formData.referenceNumber,
       invoiceNumber: formData.invoiceNumber,
+      receiptUrl: formData.receiptUrl,
       notes: formData.notes,
     };
     mutation.mutate(submitData);
+  };
+
+  const handleReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset the input so picking the same file again still fires onChange.
+    e.target.value = '';
+    if (!file) return;
+
+    setReceiptBusy(true);
+    try {
+      const dataUrl = await fileToCompressedDataUrl(file);
+      setFormData(prev => ({ ...prev, receiptUrl: dataUrl }));
+      if (errors.receiptUrl) setErrors(prev => ({ ...prev, receiptUrl: '' }));
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not process the image');
+    } finally {
+      setReceiptBusy(false);
+    }
+  };
+
+  const handleReceiptRemove = () => {
+    setFormData(prev => ({ ...prev, receiptUrl: '' }));
+    if (receiptInputRef.current) receiptInputRef.current.value = '';
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -427,6 +459,77 @@ export default function PaymentForm() {
               placeholder="Invoice number"
             />
           </div>
+        </div>
+
+        {/* Payment Screenshot (optional) */}
+        <div className="space-y-2">
+          <label className="label">Payment Screenshot / Receipt (Optional)</label>
+
+          {receiptPreview ? (
+            <div className="flex flex-wrap items-start gap-4">
+              <a
+                href={receiptPreview}
+                target="_blank"
+                rel="noreferrer"
+                title="Open full size"
+                className="block rounded-lg border border-gray-200 overflow-hidden bg-slate-50"
+              >
+                <img
+                  src={receiptPreview}
+                  alt="Payment receipt"
+                  className="h-32 w-auto max-w-xs object-contain"
+                />
+              </a>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => receiptInputRef.current?.click()}
+                  disabled={receiptBusy}
+                  className="btn btn-secondary text-sm"
+                >
+                  <ImagePlus className="w-4 h-4 mr-2" />
+                  Replace
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReceiptRemove}
+                  className="btn btn-secondary text-sm text-red-600"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => receiptInputRef.current?.click()}
+              disabled={receiptBusy}
+              className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-400 hover:bg-slate-50 transition-colors"
+            >
+              {receiptBusy ? (
+                <span className="flex items-center justify-center gap-2 text-gray-500">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Processing image…
+                </span>
+              ) : (
+                <span className="flex flex-col items-center gap-1 text-gray-500">
+                  <ImagePlus className="w-6 h-6 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Upload screenshot</span>
+                  <span className="text-xs">PNG, JPG or WebP — resized automatically</span>
+                </span>
+              )}
+            </button>
+          )}
+
+          <input
+            ref={receiptInputRef}
+            type="file"
+            accept={RECEIPT_ACCEPT}
+            onChange={handleReceiptChange}
+            className="hidden"
+          />
+          {errors.receiptUrl && <p className="text-sm text-red-500 mt-1">{errors.receiptUrl}</p>}
         </div>
 
         {/* Notes */}

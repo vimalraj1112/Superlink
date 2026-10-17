@@ -6,6 +6,7 @@ import {
   updatePayment,
   deletePayment,
   getPaymentStats,
+  getPaymentReceipt,
 } from '@/controllers/paymentController';
 import { authenticate } from '@/middleware/auth';
 import { requirePermission } from '@/middleware/rbac';
@@ -22,6 +23,9 @@ router.get('/stats', requirePermission({ resource: 'payments', actions: ['read']
 
 // List payments with filters, pagination, search
 router.get('/', requirePermission({ resource: 'payments', actions: ['read'] }), listPayments);
+
+// Payment screenshot / receipt image (auth + payment read scope checked inside)
+router.get('/:id/receipt', requirePermission({ resource: 'payments', actions: ['read'] }), getPaymentReceipt);
 
 // Get single payment
 router.get('/:id', requirePermission({ resource: 'payments', actions: ['read'] }), getPayment);

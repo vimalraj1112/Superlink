@@ -49,6 +49,9 @@ lerna-debug.log*
 backup-*/
 db-backup.json
 
+# Uploaded files (payment screenshots/receipts) — not in the JSON DB backup
+backend/uploads/
+
 # OS
 Thumbs.db
 ehthumbs.db

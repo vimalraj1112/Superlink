@@ -118,6 +118,8 @@ export const paymentApi = {
   create: (data: any) => api.post('/payments', data),
   update: (id: string, data: any) => api.patch(`/payments/${id}`, data),
   delete: (id: string) => api.delete(`/payments/${id}`),
+  getReceipt: (id: string) =>
+    api.get(`/payments/${id}/receipt`, { responseType: 'blob' }),
 };
 
 export const webhookApi = {

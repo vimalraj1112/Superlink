@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/config/db';
@@ -7,6 +8,13 @@ import { asyncHandler } from '@/middleware/errorHandler';
 import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery, getDateRange } from '@/utils/pagination';
 import { paymentReadScope } from '@/utils/accessScope';
+import {
+  isDataUrlImage,
+  savePaymentReceipt,
+  deletePaymentReceipt,
+  paymentReceiptPath,
+  receiptContentType,
+} from '@/utils/fileStorage';
 import { PaymentType } from '@prisma/client';
 
 export const paymentCreateSchema = z.object({
@@ -26,6 +34,9 @@ export const paymentCreateSchema = z.object({
     transactionId: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     referenceNumber: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     invoiceNumber: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    // Optional payment screenshot / receipt. Accepts either a base64 data URL
+    // (new upload) or the stored file name (unchanged); '' clears it on update.
+    receiptUrl: z.string().max(9000000, 'Receipt image is too large').optional().nullable(),
     notes: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
   }),
 });
@@ -118,10 +129,18 @@ export const getPayment = asyncHandler(async (req: AuthenticatedRequest, res: Re
 
 export const createPayment = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const paymentNumber = await generatePaymentNumber();
+  const { receiptUrl, ...data } = req.body;
+
+  // Only a genuine upload is persisted; anything else (a stray file name, junk)
+  // is ignored so a client can't point the field at an arbitrary value.
+  const receiptFile = isDataUrlImage(receiptUrl)
+    ? savePaymentReceipt(receiptUrl, 'pay')
+    : undefined;
 
   const payment = await prisma.payment.create({
     data: {
-      ...req.body,
+      ...data,
+      receiptUrl: receiptFile,
       paymentNumber,
       amount: new Prisma.Decimal(req.body.amount),
       paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : new Date(),
@@ -163,6 +182,21 @@ export const updatePayment = asyncHandler(async (req: AuthenticatedRequest, res:
   if (req.body.invoiceNumber !== undefined) updateData.invoiceNumber = req.body.invoiceNumber;
   if (req.body.notes !== undefined) updateData.notes = req.body.notes;
 
+  if (req.body.receiptUrl !== undefined) {
+    const incoming: unknown = req.body.receiptUrl;
+    if (isDataUrlImage(incoming)) {
+      // New screenshot uploaded — store it and drop the previous file.
+      const fileName = savePaymentReceipt(incoming, 'pay');
+      deletePaymentReceipt(currentPayment.receiptUrl);
+      updateData.receiptUrl = fileName;
+    } else if (!incoming) {
+      // Explicitly cleared by the user.
+      deletePaymentReceipt(currentPayment.receiptUrl);
+      updateData.receiptUrl = null;
+    }
+    // Any other value (e.g. the unchanged stored file name) is left untouched.
+  }
+
   const payment = await prisma.payment.update({
     where: { id },
     data: updateData,
@@ -179,9 +213,42 @@ export const updatePayment = asyncHandler(async (req: AuthenticatedRequest, res:
 export const deletePayment = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
+  const existing = await prisma.payment.findUnique({
+    where: { id },
+    select: { receiptUrl: true },
+  });
+
   await prisma.payment.delete({ where: { id } });
 
+  // Remove the stored screenshot alongside the record (best-effort).
+  deletePaymentReceipt(existing?.receiptUrl);
+
   sendSuccess(res, null, 'Payment deleted successfully');
+});
+
+/** Streams a payment's screenshot. Guarded by auth + the same read scope as the payment. */
+export const getPaymentReceipt = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+
+  const payment = await prisma.payment.findFirst({
+    where: { id, ...paymentReadScope(req.user) },
+    select: { receiptUrl: true },
+  });
+
+  if (!payment || !payment.receiptUrl) {
+    sendNotFound(res, 'No receipt attached to this payment');
+    return;
+  }
+
+  const filePath = paymentReceiptPath(payment.receiptUrl);
+  if (!fs.existsSync(filePath)) {
+    sendNotFound(res, 'Receipt file is missing');
+    return;
+  }
+
+  res.setHeader('Content-Type', receiptContentType(payment.receiptUrl));
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.sendFile(filePath);
 });
 
 export const getPaymentStats = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {

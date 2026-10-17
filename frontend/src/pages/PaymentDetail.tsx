@@ -13,12 +13,14 @@ import {
   FileText,
   DollarSign,
   MapPin,
+  ImageIcon,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { paymentApi } from '@/api/endpoints';
 import Modal from '@/components/common/Modal';
 import type { Payment } from '@/types/models';
 import { PaymentType } from '@/types/enums';
+import { useReceiptPreview } from '@/lib/imageUpload';
 import { toast } from 'sonner';
 
 const paymentTypeLabels: Record<string, string> = {
@@ -39,6 +41,7 @@ export default function PaymentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['payment', id],
@@ -47,6 +50,7 @@ export default function PaymentDetail() {
   });
 
   const payment = data?.data?.data;
+  const receiptPreview = useReceiptPreview(id, payment?.receiptUrl);
 
   const handleDelete = async () => {
     if (!payment) return;
@@ -253,6 +257,32 @@ export default function PaymentDetail() {
               </div>
             </div>
           )}
+
+          {/* Payment Screenshot */}
+          <div className="pt-6 border-t border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-gray-400" />
+              Payment Screenshot
+            </h3>
+            {payment.receiptUrl && receiptPreview ? (
+              <button
+                type="button"
+                onClick={() => setReceiptModalOpen(true)}
+                title="Click to enlarge"
+                className="block rounded-lg border border-gray-200 overflow-hidden bg-slate-50 group"
+              >
+                <img
+                  src={receiptPreview}
+                  alt="Payment receipt"
+                  className="max-h-80 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                />
+              </button>
+            ) : payment.receiptUrl ? (
+              <p className="text-sm text-gray-500">Loading screenshot…</p>
+            ) : (
+              <p className="text-sm text-gray-500">No screenshot uploaded for this payment.</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -270,6 +300,16 @@ export default function PaymentDetail() {
               Delete
             </button>
           </div>
+        </Modal>
+      )}
+
+      {receiptModalOpen && receiptPreview && (
+        <Modal
+          isOpen={receiptModalOpen}
+          onClose={() => setReceiptModalOpen(false)}
+          title="Payment Screenshot"
+        >
+          <img src={receiptPreview} alt="Payment receipt" className="w-full h-auto rounded-lg" />
         </Modal>
       )}
     </div>
