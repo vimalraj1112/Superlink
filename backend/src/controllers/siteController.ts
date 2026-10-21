@@ -53,12 +53,17 @@ export const listSites = asyncHandler(async (req: AuthenticatedRequest, res: Res
   const status = req.query.status as SiteStatus | 'ALL' | undefined;
   const customerId = req.query.customerId as string | undefined;
   const ispId = req.query.ispId as string | undefined;
+  const renewalDue = req.query.renewalDue as string | undefined;
+
+  // Must match RENEWAL_DUE_DAYS in the renewal badge UI.
+  const renewalWindowEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const where: Prisma.SiteWhereInput = {
     ...siteReadScope(req.user),
     ...(status && status !== 'ALL' ? { status } : status !== 'ALL' ? { status: { not: SiteStatus.DISCONNECTED } } : {}),
     ...(customerId ? { customerId } : {}),
     ...(ispId ? { ispId } : {}),
+    ...(renewalDue === 'true' ? { renewalDate: { lte: renewalWindowEnd } } : {}),
     ...(search
       ? {
           OR: [

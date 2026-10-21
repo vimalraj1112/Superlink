@@ -8,6 +8,7 @@ import DataTable from '@/components/common/DataTable';
 import StatusBadge from '@/components/common/StatusBadge';
 import Modal from '@/components/common/Modal';
 import SiteForm from '@/components/forms/SiteForm';
+import RenewalCell from '@/components/common/RenewalCell';
 import type { Site } from '@/types/models';
 import { SiteStatus, SiteStatusLabels } from '@/types/enums';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ export default function Sites() {
   const [status, setStatus] = useState<SiteStatus | ''>('');
   const [customerId, setCustomerId] = useState('');
   const [ispId, setIspId] = useState('');
+  const [renewalDueOnly, setRenewalDueOnly] = useState(false);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -33,7 +35,7 @@ export default function Sites() {
   const [editingSite, setEditingSite] = useState<Site | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['sites', page, limit, search, status, customerId, ispId, sortBy, sortOrder],
+    queryKey: ['sites', page, limit, search, status, customerId, ispId, renewalDueOnly, sortBy, sortOrder],
     queryFn: () => siteApi.list({
       page,
       limit,
@@ -41,6 +43,7 @@ export default function Sites() {
       status: status || undefined,
       customerId: customerId || undefined,
       ispId: ispId || undefined,
+      renewalDue: renewalDueOnly || undefined,
       sortBy,
       sortOrder,
     }),
@@ -153,7 +156,7 @@ export default function Sites() {
       key: 'renewalDate',
       header: 'Renewal',
       sortable: true,
-      render: (row: Site) => row.renewalDate ? new Date(row.renewalDate).toLocaleDateString() : '-',
+      render: (row: Site) => <RenewalCell date={row.renewalDate} />,
     },
     {
       key: 'actions',
@@ -212,10 +215,13 @@ export default function Sites() {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={clsx('btn btn-secondary gap-2', showFilters && 'bg-primary-50 text-primary-700 border-primary-200')}
+            className={clsx('btn btn-secondary gap-2', (showFilters || renewalDueOnly) && 'bg-primary-50 text-primary-700 border-primary-200')}
           >
             <Filter className="w-4 h-4" />
             Filters
+            {renewalDueOnly && (
+              <span className="rounded-full bg-red-100 px-1.5 text-xs font-semibold text-red-700">due</span>
+            )}
             {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
@@ -240,6 +246,18 @@ export default function Sites() {
                 <option key={isp.id} value={isp.id}>{isp.displayName || isp.name}</option>
               ))}
             </select>
+            <label className="flex items-center gap-2 cursor-pointer select-none sm:col-span-2 lg:col-span-1">
+              <input
+                type="checkbox"
+                checked={renewalDueOnly}
+                onChange={e => {
+                  setRenewalDueOnly(e.target.checked);
+                  setPage(1);
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Renewal due (7 days)</span>
+            </label>
             <div className="flex gap-2">
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="input text-sm">
                 <option value="createdAt">Created Date</option>

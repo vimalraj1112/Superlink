@@ -41,6 +41,7 @@ export const siteApi = {
     ispId?: string;
     status?: string;
     connectionType?: string;
+    renewalDue?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }) => api.get('/sites', { params }),
