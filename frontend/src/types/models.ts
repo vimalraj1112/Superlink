@@ -51,6 +51,8 @@ export interface Customer {
   billingPincode?: string;
   notes?: string;
   isActive: boolean;
+  /** Soonest site renewal date, computed by the API for the customer list. */
+  nextRenewalDate?: string | null;
   createdById: string;
   updatedById?: string;
   createdAt: string;

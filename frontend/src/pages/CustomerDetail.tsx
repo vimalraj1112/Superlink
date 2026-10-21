@@ -18,6 +18,7 @@ import {
   ChevronUp,
   Eye,
   MapPin as MapPinIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { customerApi, siteApi, ticketApi } from '@/api/endpoints';
@@ -142,7 +143,21 @@ export default function CustomerDetail() {
       key: 'renewalDate',
       header: 'Renewal Date',
       sortable: true,
-      render: (row: Site) => row.renewalDate ? new Date(row.renewalDate).toLocaleDateString() : '-',
+      render: (row: Site) => {
+        if (!row.renewalDate) return <span className="text-gray-400">—</span>;
+
+        const days = Math.ceil((new Date(row.renewalDate).getTime() - Date.now()) / 86_400_000);
+        if (days <= 7) {
+          return (
+            <span className="inline-flex items-center gap-1.5 font-medium text-red-700">
+              <AlertTriangle className="h-4 w-4" />
+              {new Date(row.renewalDate).toLocaleDateString()}
+            </span>
+          );
+        }
+
+        return new Date(row.renewalDate).toLocaleDateString();
+      },
     },
     {
       key: 'actions',

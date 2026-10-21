@@ -81,7 +81,35 @@ export const listCustomers = asyncHandler(async (req: AuthenticatedRequest, res:
     prisma.customer.count({ where }),
   ]);
 
-  sendPaginatedSuccess(res, customers, 'Customers fetched successfully', page, limit, totalItems);
+  // Attach each customer's soonest site renewal so the list can flag renewals
+  // that are due or overdue. Same basis as the dashboard: renewalDate, and
+  // disconnected sites are ignored.
+  const customerIds = customers.map(customer => customer.id);
+  const renewalSites = customerIds.length
+    ? await prisma.site.findMany({
+        where: {
+          customerId: { in: customerIds },
+          renewalDate: { not: null },
+          status: { not: 'DISCONNECTED' },
+        },
+        select: { customerId: true, renewalDate: true },
+        orderBy: { renewalDate: 'asc' },
+      })
+    : [];
+
+  const nextRenewalByCustomer = new Map<string, Date>();
+  for (const site of renewalSites) {
+    if (site.renewalDate && !nextRenewalByCustomer.has(site.customerId)) {
+      nextRenewalByCustomer.set(site.customerId, site.renewalDate);
+    }
+  }
+
+  const customersWithRenewal = customers.map(customer => ({
+    ...customer,
+    nextRenewalDate: nextRenewalByCustomer.get(customer.id) ?? null,
+  }));
+
+  sendPaginatedSuccess(res, customersWithRenewal, 'Customers fetched successfully', page, limit, totalItems);
 });
 
 export const getCustomer = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
