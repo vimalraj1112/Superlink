@@ -19,6 +19,7 @@ export const customerApi = {
     limit?: number;
     search?: string;
     isActive?: boolean;
+    renewalDue?: boolean;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }) => api.get('/customers', { params }),

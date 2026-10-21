@@ -48,10 +48,24 @@ export const listCustomers = asyncHandler(async (req: AuthenticatedRequest, res:
   const { page, limit, skip, take } = getPaginationParams(req);
   const search = getSearchQuery(req);
   const isActive = req.query.isActive as string | undefined;
+  const renewalDue = req.query.renewalDue as string | undefined;
+
+  // Must match RENEWAL_DUE_DAYS in the customers list UI.
+  const renewalWindowEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const where: Prisma.CustomerWhereInput = {
     ...customerReadScope(req.user),
     ...(isActive !== undefined ? { isActive: isActive === 'true' } : {}),
+    ...(renewalDue === 'true'
+      ? {
+          sites: {
+            some: {
+              renewalDate: { lte: renewalWindowEnd },
+              status: { not: 'DISCONNECTED' },
+            },
+          },
+        }
+      : {}),
     ...(search
       ? {
           OR: [

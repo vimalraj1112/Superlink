@@ -54,6 +54,7 @@ export default function Customers() {
   const [limit, setLimit] = useState(25);
   const [search, setSearch] = useState('');
   const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(true);
+  const [renewalDueOnly, setRenewalDueOnly] = useState(false);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
@@ -64,8 +65,16 @@ export default function Customers() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['customers', page, limit, search, isActiveFilter, sortBy, sortOrder],
-    queryFn: () => customerApi.list({ page, limit, search, isActive: isActiveFilter, sortBy, sortOrder }),
+    queryKey: ['customers', page, limit, search, isActiveFilter, renewalDueOnly, sortBy, sortOrder],
+    queryFn: () => customerApi.list({
+      page,
+      limit,
+      search,
+      isActive: isActiveFilter,
+      renewalDue: renewalDueOnly || undefined,
+      sortBy,
+      sortOrder,
+    }),
     placeholderData: (previousData) => previousData,
   });
 
@@ -238,11 +247,16 @@ export default function Customers() {
               onClick={() => setShowFilters(!showFilters)}
               className={clsx(
                 'btn btn-secondary gap-2',
-                showFilters && 'bg-primary-50 text-primary-700 border-primary-200'
+                (showFilters || renewalDueOnly) && 'bg-primary-50 text-primary-700 border-primary-200'
               )}
             >
               <Filter className="w-4 h-4" />
               Filters
+              {renewalDueOnly && (
+                <span className="rounded-full bg-red-100 px-1.5 text-xs font-semibold text-red-700">
+                  due
+                </span>
+              )}
               {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           </div>
@@ -265,6 +279,19 @@ export default function Customers() {
                 <option value="false">Inactive</option>
               </select>
             </div>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={renewalDueOnly}
+                onChange={e => {
+                  setRenewalDueOnly(e.target.checked);
+                  setPage(1);
+                }}
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm font-medium text-gray-700">Renewal due (7 days)</span>
+            </label>
 
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700">Sort by:</label>
