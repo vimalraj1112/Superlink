@@ -4,6 +4,7 @@ import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import logo from '@/assets/ChatGPT Image Aug 5, 2026, 11_31_31 AM.png';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -37,9 +38,11 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="card p-8">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-[#ffffff] font-bold text-2xl">SL</span>
-            </div>
+            <img
+              src={logo}
+              alt="SuperLink IT Services"
+              className="w-32 h-32 mx-auto mb-4 object-contain"
+            />
             <h1 className="text-2xl font-bold text-gray-900">SuperLink CRM</h1>
             <p className="text-gray-500 mt-1">Sign in to your account</p>
           </div>
