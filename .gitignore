@@ -63,7 +63,8 @@ Desktop.ini
 .*.swp
 
 # Prisma
-backend/prisma/migrations/
+# NOTE: migrations must stay tracked — `prisma migrate deploy` needs them on
+# Render. Do not ignore backend/prisma/migrations/.
 
 # Test coverage
 coverage/

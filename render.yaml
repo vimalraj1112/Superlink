@@ -1,0 +1,90 @@
+# Render Blueprint for SuperLink ISP CRM
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Creates three resources:
+#   1. superlink-db   - managed PostgreSQL
+#   2. superlink-api  - Node/Express/Prisma web service
+#   3. superlink-web  - static React (Vite) site
+#
+# After the first deploy, set CORS_ORIGIN and FRONTEND_URL on superlink-api
+# to the public URL of superlink-web (e.g. https://superlink-web.onrender.com).
+
+databases:
+  - name: superlink-db
+    databaseName: superlink
+    user: superlink
+    plan: free
+    region: singapore
+
+services:
+  - type: web
+    name: superlink-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run prisma:deploy && npm start
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: superlink-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 300
+      # Public URL of the frontend service. Fill in after the first deploy.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      # Optional integrations - leave empty to disable.
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_URL
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_WEBHOOK_URL
+        sync: false
+
+  - type: static
+    name: superlink-web
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      # SPA fallback so client-side routing works on refresh / deep links.
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: superlink-api
+          property: host
+      - key: VITE_API_VERSION
+        value: v1
+      - key: VITE_APP_NAME
+        value: SuperLink CRM

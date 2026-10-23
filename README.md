@@ -43,6 +43,11 @@ npm run dev  # http://localhost:5175
 
 See [RUNNING.md](RUNNING.md) for detailed instructions.
 
+## ☁️ Deployment
+
+See [DEPLOY.md](DEPLOY.md) for deploying to Render (database, API and frontend),
+or use the included `render.yaml` blueprint.
+
 ## 🏗 Architecture
 
 ```
