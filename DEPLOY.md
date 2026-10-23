@@ -134,6 +134,27 @@ you don't want the new one.
 
 ---
 
+## Moving your existing local data to Render
+
+Deploying does **not** copy your local database — Render starts empty. To move
+`Customer`, `Site`, `User`, etc. from `localhost:5432/superlink_db`:
+
+1. Apply the schema on Render (step 1 above).
+2. Copy rows in FK-safe order: `Role → User → ISP → Customer → Site →
+   SiteCredential → Ticket → TicketMessage → ChatSession → ChatMessage →
+   Payment → AuditLog → Quotation → QuotationItem`, preserving the `cuid` ids so
+   every relation stays valid (see the one-off script used for the initial
+   migration, or use `pg_dump`/`pg_restore`).
+3. Do not truncate `_prisma_migrations` — that's what keeps `migrate deploy` working.
+
+After the copy, local and production are two independent databases. Pick one as
+the source of truth: either point `backend/.env` at the Render **External**
+Database URL while developing, or keep a documented export/import routine.
+
+Site credentials (`SiteCredential.passwordEnc`) are encrypted with
+`ENCRYPTION_KEY`. If you copy rows between environments, both must use the same
+key or the vault entries become unreadable.
+
 ## Free-tier limitations
 
 - Web services sleep after ~15 min idle → first request takes ~30–60 s and
