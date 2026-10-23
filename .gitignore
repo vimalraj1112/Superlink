@@ -49,6 +49,15 @@ lerna-debug.log*
 backup-*/
 db-backup.json
 
+# One-off admin/debug scripts that embed the production DB password
+backend/create-admin.js
+backend/insert-admin.js
+backend/setup-admin.js
+backend/setup-db.js
+backend/check-user.js
+backend/output.txt
+test_customer_api.js
+
 # Uploaded files (payment screenshots/receipts) — not in the JSON DB backup
 backend/uploads/
 
