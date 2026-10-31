@@ -86,6 +86,7 @@ export interface Site {
   connectionType?: string;
   circuitId?: string;
   provisionedAt?: string;
+  activeDate?: string;
   renewalDate?: string;
   disconnectedAt?: string;
   notes?: string;

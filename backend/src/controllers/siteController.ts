@@ -29,6 +29,7 @@ export const siteCreateSchema = z.object({
     longitude: z.number().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     connectionType: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     circuitId: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    activeDate: z.string().datetime().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
     renewalDate: z.string().datetime().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
     notes: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
   }),
@@ -145,6 +146,7 @@ export const createSite = asyncHandler(async (req: AuthenticatedRequest, res: Re
     data: {
       ...req.body,
       siteCode,
+      activeDate: req.body.activeDate ? new Date(req.body.activeDate) : null,
       renewalDate: req.body.renewalDate ? new Date(req.body.renewalDate) : null,
       createdById: req.user!.userId,
     },
@@ -164,6 +166,10 @@ export const updateSite = asyncHandler(async (req: AuthenticatedRequest, res: Re
     ...req.body,
     updatedById: req.user!.userId,
   };
+
+  if (req.body.activeDate !== undefined) {
+    updateData.activeDate = req.body.activeDate ? new Date(req.body.activeDate) : null;
+  }
 
   if (req.body.renewalDate !== undefined) {
     updateData.renewalDate = req.body.renewalDate ? new Date(req.body.renewalDate) : null;

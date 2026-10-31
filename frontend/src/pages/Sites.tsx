@@ -153,6 +153,13 @@ export default function Sites() {
       render: (row: Site) => `₹${Number(row.mrc || 0).toLocaleString()}`,
     },
     {
+      key: 'activeDate',
+      header: 'Active',
+      sortable: true,
+      render: (row: Site) =>
+        row.activeDate ? new Date(row.activeDate).toLocaleDateString() : <span className="text-gray-400">-</span>,
+    },
+    {
       key: 'renewalDate',
       header: 'Renewal',
       sortable: true,

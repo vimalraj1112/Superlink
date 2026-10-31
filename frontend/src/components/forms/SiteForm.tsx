@@ -42,6 +42,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     connectionType: '',
     circuitId: '',
     provisionedAt: '',
+    activeDate: '',
     renewalDate: '',
     notes: '',
   });
@@ -70,6 +71,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
         connectionType: initialData.connectionType || '',
         circuitId: initialData.circuitId || '',
         provisionedAt: initialData.provisionedAt ? new Date(initialData.provisionedAt).toISOString().split('T')[0] : '',
+        activeDate: initialData.activeDate ? new Date(initialData.activeDate).toISOString().split('T')[0] : '',
         renewalDate: initialData.renewalDate ? new Date(initialData.renewalDate).toISOString().split('T')[0] : '',
         notes: initialData.notes || '',
       });
@@ -93,6 +95,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
         connectionType: '',
         circuitId: '',
         provisionedAt: '',
+        activeDate: '',
         renewalDate: '',
         notes: '',
       });
@@ -234,12 +237,20 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
       submitData.staticIpCount = 0;
     }
 
-    // Convert dates
-    if (submitData.provisionedAt) submitData.provisionedAt = new Date(submitData.provisionedAt).toISOString();
-    if (submitData.renewalDate) submitData.renewalDate = new Date(submitData.renewalDate).toISOString();
+    // Convert dates. An empty value means "clear it" (null), so it must still be
+    // sent — deleting the key would leave the stored date unchanged.
+    submitData.provisionedAt = submitData.provisionedAt
+      ? new Date(submitData.provisionedAt).toISOString()
+      : null;
+    submitData.activeDate = submitData.activeDate
+      ? new Date(submitData.activeDate).toISOString()
+      : null;
+    submitData.renewalDate = submitData.renewalDate
+      ? new Date(submitData.renewalDate).toISOString()
+      : null;
 
     // Omit empty optional string fields so they don't get persisted as blanks
-    ['connectionType', 'circuitId', 'notes', 'renewalDate', 'provisionedAt'].forEach(field => {
+    ['connectionType', 'circuitId', 'notes'].forEach(field => {
       if (!submitData[field]) delete submitData[field];
     });
 
@@ -526,6 +537,15 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
                 type="date"
                 value={formData.provisionedAt}
                 onChange={(e) => handleChange('provisionedAt', e.target.value)}
+                className="input"
+              />
+            </div>
+            <div>
+              <label className="label">Active Date</label>
+              <input
+                type="date"
+                value={formData.activeDate}
+                onChange={(e) => handleChange('activeDate', e.target.value)}
                 className="input"
               />
             </div>

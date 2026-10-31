@@ -140,6 +140,13 @@ export default function CustomerDetail() {
       render: (row: Site) => `₹${row.mrc.toLocaleString()}`,
     },
     {
+      key: 'activeDate',
+      header: 'Active Date',
+      sortable: true,
+      render: (row: Site) =>
+        row.activeDate ? new Date(row.activeDate).toLocaleDateString() : <span className="text-gray-400">-</span>,
+    },
+    {
       key: 'renewalDate',
       header: 'Renewal Date',
       sortable: true,

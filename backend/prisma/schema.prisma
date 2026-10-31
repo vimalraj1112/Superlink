@@ -137,6 +137,7 @@ model Site {
   connectionType      String?
   circuitId           String?
   provisionedAt       DateTime?
+  activeDate          DateTime?
   renewalDate         DateTime?
   disconnectedAt      DateTime?
   notes               String?
@@ -158,6 +159,7 @@ model Site {
   @@index([customerId])
   @@index([ispId])
   @@index([status])
+  @@index([activeDate])
   @@index([renewalDate])
 }
 

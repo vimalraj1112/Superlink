@@ -43,6 +43,22 @@ export const paymentCreateSchema = z.object({
 
 export const paymentUpdateSchema = paymentCreateSchema.deepPartial();
 
+/** Keeps a site's activation date in sync with its most recent payment. */
+async function syncSiteActiveDate(siteId?: string | null): Promise<void> {
+  if (!siteId) return;
+
+  const latest = await prisma.payment.findFirst({
+    where: { siteId },
+    orderBy: { paymentDate: 'desc' },
+    select: { paymentDate: true },
+  });
+
+  await prisma.site.update({
+    where: { id: siteId },
+    data: { activeDate: latest?.paymentDate ?? null },
+  });
+}
+
 async function generatePaymentNumber(): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = `PAY-${year}`;
@@ -153,6 +169,8 @@ export const createPayment = asyncHandler(async (req: AuthenticatedRequest, res:
     },
   });
 
+  await syncSiteActiveDate(payment.siteId);
+
   sendSuccess(res, payment, 'Payment created successfully', 201);
 });
 
@@ -207,6 +225,11 @@ export const updatePayment = asyncHandler(async (req: AuthenticatedRequest, res:
     },
   });
 
+  await syncSiteActiveDate(payment.siteId);
+  if (currentPayment.siteId && currentPayment.siteId !== payment.siteId) {
+    await syncSiteActiveDate(currentPayment.siteId);
+  }
+
   sendSuccess(res, payment, 'Payment updated successfully');
 });
 
@@ -215,10 +238,13 @@ export const deletePayment = asyncHandler(async (req: Request, res: Response) =>
 
   const existing = await prisma.payment.findUnique({
     where: { id },
-    select: { receiptUrl: true },
+    select: { receiptUrl: true, siteId: true },
   });
 
   await prisma.payment.delete({ where: { id } });
+
+  // Keep the site's activation date aligned with its latest remaining payment.
+  await syncSiteActiveDate(existing?.siteId);
 
   // Remove the stored screenshot alongside the record (best-effort).
   deletePaymentReceipt(existing?.receiptUrl);

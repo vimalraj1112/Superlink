@@ -126,6 +126,7 @@ function normalizeRow(raw: any, type: ImportType): any {
   put(row, 'connectionType', asString(g('connectionType', 'Connection Type')));
   put(row, 'circuitId', asString(g('circuitId', 'Circuit ID')));
   put(row, 'provisionedAt', asIsoDate(g('provisionedAt', 'Provisioned At', 'Provisioned Date')));
+  put(row, 'activeDate', asIsoDate(g('activeDate', 'Active Date', 'Activation Date', 'Start Date')));
   put(row, 'renewalDate', asIsoDate(g('renewalDate', 'Renewal Date')));
   put(row, 'notes', asString(g('notes', 'Notes')));
   return row;
