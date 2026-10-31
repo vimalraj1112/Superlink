@@ -95,32 +95,40 @@ export const listCustomers = asyncHandler(async (req: AuthenticatedRequest, res:
     prisma.customer.count({ where }),
   ]);
 
-  // Attach each customer's soonest site renewal so the list can flag renewals
-  // that are due or overdue. Same basis as the dashboard: renewalDate, and
-  // disconnected sites are ignored.
+  // Attach each customer's soonest site renewal and most recent activation so
+  // the list can flag renewals that are due or overdue. Same basis as the
+  // dashboard: disconnected sites are ignored.
   const customerIds = customers.map(customer => customer.id);
-  const renewalSites = customerIds.length
+  const customerSites = customerIds.length
     ? await prisma.site.findMany({
         where: {
           customerId: { in: customerIds },
-          renewalDate: { not: null },
           status: { not: 'DISCONNECTED' },
+          OR: [{ renewalDate: { not: null } }, { activeDate: { not: null } }],
         },
-        select: { customerId: true, renewalDate: true },
+        select: { customerId: true, activeDate: true, renewalDate: true },
         orderBy: { renewalDate: 'asc' },
       })
     : [];
 
   const nextRenewalByCustomer = new Map<string, Date>();
-  for (const site of renewalSites) {
+  const latestActiveByCustomer = new Map<string, Date>();
+  for (const site of customerSites) {
     if (site.renewalDate && !nextRenewalByCustomer.has(site.customerId)) {
       nextRenewalByCustomer.set(site.customerId, site.renewalDate);
+    }
+    if (site.activeDate) {
+      const current = latestActiveByCustomer.get(site.customerId);
+      if (!current || site.activeDate > current) {
+        latestActiveByCustomer.set(site.customerId, site.activeDate);
+      }
     }
   }
 
   const customersWithRenewal = customers.map(customer => ({
     ...customer,
     nextRenewalDate: nextRenewalByCustomer.get(customer.id) ?? null,
+    latestActiveDate: latestActiveByCustomer.get(customer.id) ?? null,
   }));
 
   sendPaginatedSuccess(res, customersWithRenewal, 'Customers fetched successfully', page, limit, totalItems);

@@ -118,6 +118,15 @@ export default function Customers() {
       sortable: true,
     },
     {
+      key: 'latestActiveDate',
+      header: 'Active',
+      sortable: false,
+      render: (row: Customer) =>
+        row.latestActiveDate
+          ? new Date(row.latestActiveDate).toLocaleDateString()
+          : <span className="text-gray-400">-</span>,
+    },
+    {
       key: 'nextRenewalDate',
       header: 'Renewal',
       sortable: false,

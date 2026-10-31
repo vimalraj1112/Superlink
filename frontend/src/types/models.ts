@@ -53,6 +53,8 @@ export interface Customer {
   isActive: boolean;
   /** Soonest site renewal date, computed by the API for the customer list. */
   nextRenewalDate?: string | null;
+  /** Most recent site activation date, computed by the API for the customer list. */
+  latestActiveDate?: string | null;
   createdById: string;
   updatedById?: string;
   createdAt: string;
