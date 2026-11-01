@@ -32,6 +32,7 @@ import { siteApi, ticketApi, paymentApi, credentialsApi } from '@/api/endpoints'
 import DataTable from '@/components/common/DataTable';
 import StatusBadge from '@/components/common/StatusBadge';
 import Modal from '@/components/common/Modal';
+import ImageThumb from '@/components/common/ImageThumb';
 import type { Site, Ticket, Payment } from '@/types/models';
 import { SiteStatus, TicketStatus, TicketPriority, TicketSource, PaymentType } from '@/types/enums';
 import { toast } from 'sonner';
@@ -256,9 +257,17 @@ export default function SiteDetail() {
       <div className="card">
         <div className="p-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{site.siteCode}</h1>
-              <p className="text-gray-600 mt-1">{site.planName} • {site.bandwidth} • {site.customer?.companyName}</p>
+            <div className="flex items-center gap-4">
+              <ImageThumb
+                value={site.photoUrl}
+                fetchBlob={() => siteApi.getPhoto(site.id)}
+                alt={`${site.siteCode} photo`}
+                className="w-14 h-14 rounded-lg object-cover border border-gray-200 bg-slate-50"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{site.siteCode}</h1>
+                <p className="text-gray-600 mt-1">{site.planName} • {site.bandwidth} • {site.customer?.companyName}</p>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <StatusBadge type="site" value={site.status} />
@@ -445,6 +454,17 @@ export default function SiteDetail() {
             <div>
               {credentials ? (
                 <div className="space-y-4">
+                  {credentials.photoUrl && (
+                    <div className="p-4 bg-slate-50 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Installation Photo</h3>
+                      <ImageThumb
+                        value={credentials.photoUrl}
+                        fetchBlob={() => credentialsApi.getPhoto(site.id)}
+                        alt={`${site.siteCode} credentials photo`}
+                        className="max-h-80 w-auto max-w-full rounded-lg border border-gray-200 bg-white object-contain"
+                      />
+                    </div>
+                  )}
                   <div className="p-4 bg-slate-50 rounded-lg">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Router Credentials</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

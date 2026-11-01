@@ -46,6 +46,7 @@ export const siteApi = {
     sortOrder?: 'asc' | 'desc';
   }) => api.get('/sites', { params }),
   get: (id: string) => api.get(`/sites/${id}`),
+  getPhoto: (id: string) => api.get(`/sites/${id}/photo`, { responseType: 'blob' }),
   create: (data: any) => api.post('/sites', data),
   update: (id: string, data: any) => api.patch(`/sites/${id}`, data),
   delete: (id: string) => api.delete(`/sites/${id}`),
@@ -62,6 +63,7 @@ export const ispApi = {
     sortOrder?: 'asc' | 'desc';
   }) => api.get('/isps', { params }),
   get: (id: string) => api.get(`/isps/${id}`),
+  getPhoto: (id: string) => api.get(`/isps/${id}/photo`, { responseType: 'blob' }),
   create: (data: any) => api.post('/isps', data),
   update: (id: string, data: any) => api.patch(`/isps/${id}`, data),
   delete: (id: string) => api.delete(`/isps/${id}`),
@@ -138,6 +140,7 @@ export const credentialsApi = {
     sortOrder?: 'asc' | 'desc';
   }) => api.get('/credentials', { params }),
   getBySite: (siteId: string) => api.get(`/credentials/sites/${siteId}`),
+  getPhoto: (siteId: string) => api.get(`/credentials/sites/${siteId}/photo`, { responseType: 'blob' }),
   createOrUpdate: (siteId: string, data: any) => api.post(`/credentials/sites/${siteId}`, data),
   reveal: (siteId: string, field: 'password' | 'pppoePassword') =>
     api.post(`/credentials/sites/${siteId}/reveal`, { field }),

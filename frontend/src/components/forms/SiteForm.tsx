@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Loader2, MapPin, Building2, Wifi, DollarSign, Calendar, Hash } from 'lucide-react';
+import { X, Loader2, MapPin, Building2, Wifi, DollarSign, Calendar, Hash, Camera } from 'lucide-react';
 import { siteApi, customerApi, ispApi } from '@/api/endpoints';
 import type { Site } from '@/types/models';
 import { SiteStatus, SiteStatusLabels, ConnectionType, ConnectionTypeLabels } from '@/types/enums';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import Modal from '@/components/common/Modal';
 import { mapFieldErrors } from '@/components/common/fieldErrors';
 import SearchableSelect from '@/components/common/SearchableSelect';
+import ImageUploadField from '@/components/common/ImageUploadField';
 
 interface SiteFormProps {
   isOpen: boolean;
@@ -45,6 +46,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
     activeDate: '',
     renewalDate: '',
     notes: '',
+    photoUrl: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -74,6 +76,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
         activeDate: initialData.activeDate ? new Date(initialData.activeDate).toISOString().split('T')[0] : '',
         renewalDate: initialData.renewalDate ? new Date(initialData.renewalDate).toISOString().split('T')[0] : '',
         notes: initialData.notes || '',
+        photoUrl: initialData.photoUrl || '',
       });
     } else {
       setFormData({
@@ -98,6 +101,7 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
         activeDate: '',
         renewalDate: '',
         notes: '',
+        photoUrl: '',
       });
     }
     setErrors({});
@@ -522,6 +526,22 @@ export default function SiteForm({ isOpen, onClose, initialData }: SiteFormProps
               {errors.installationPincode && <p className="text-sm text-red-500 mt-1">{errors.installationPincode}</p>}
             </div>
           </div>
+        </div>
+
+        {/* Photo Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-primary-600" />
+            Site Photo
+          </h3>
+          <ImageUploadField
+            label="Photo"
+            value={formData.photoUrl}
+            onChange={(value) => handleChange('photoUrl', value)}
+            fetchBlob={targetId ? () => siteApi.getPhoto(targetId) : undefined}
+            helpText="Installation or equipment photo — PNG, JPG or WebP, resized automatically"
+            error={errors.photoUrl}
+          />
         </div>
 
         {/* Dates Section */}

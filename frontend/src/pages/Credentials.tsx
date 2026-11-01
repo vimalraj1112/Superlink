@@ -7,6 +7,7 @@ import { credentialsApi, siteApi } from '@/api/endpoints';
 import DataTable from '@/components/common/DataTable';
 import Modal from '@/components/common/Modal';
 import SearchableSelect from '@/components/common/SearchableSelect';
+import ImageUploadField from '@/components/common/ImageUploadField';
 import type { Site } from '@/types/models';
 import { toast } from 'sonner';
 
@@ -21,6 +22,7 @@ interface CredentialRow {
   routerModel?: string;
   vlanId?: string;
   pppoeUsername?: string;
+  photoUrl?: string;
   hasPassword: boolean;
   hasPppoePassword: boolean;
   updatedAt: string;
@@ -37,6 +39,7 @@ interface CredentialFormState {
   pppoePassword: string;
   staticIps: string;
   notes: string;
+  photoUrl: string;
 }
 
 const emptyForm: CredentialFormState = {
@@ -50,6 +53,7 @@ const emptyForm: CredentialFormState = {
   pppoePassword: '',
   staticIps: '',
   notes: '',
+  photoUrl: '',
 };
 
 export default function Credentials() {
@@ -99,6 +103,7 @@ export default function Credentials() {
       pppoePassword: '',
       staticIps: '',
       notes: '',
+      photoUrl: row.photoUrl || '',
     });
     setFormError('');
     setModalOpen(true);
@@ -173,6 +178,8 @@ export default function Credentials() {
       pppoePassword: form.pppoePassword || undefined,
       staticIps: staticIps.length ? staticIps : undefined,
       notes: form.notes || undefined,
+      // Sent even when empty so an existing photo can be cleared.
+      photoUrl: form.photoUrl,
     };
 
     saveMutation.mutate({ siteId: form.siteId, data: payload });
@@ -402,6 +409,14 @@ export default function Credentials() {
               error={formError}
               required
               disabled={!!editing}
+            />
+
+            <ImageUploadField
+              label="Router / Rack Photo"
+              value={form.photoUrl}
+              onChange={value => setForm(prev => ({ ...prev, photoUrl: value }))}
+              fetchBlob={form.siteId ? () => credentialsApi.getPhoto(form.siteId) : undefined}
+              helpText="Router, rack or installation photo — PNG, JPG or WebP, resized automatically"
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

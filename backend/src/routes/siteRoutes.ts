@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   listSites,
   getSite,
+  getSitePhoto,
   createSite,
   updateSite,
   deleteSite,
@@ -26,6 +27,9 @@ router.get('/customer/:customerId', requirePermission({ resource: 'sites', actio
 
 // Get site by ID - needs sites:read
 router.get('/:id', requirePermission({ resource: 'sites', actions: ['read'] }), getSite);
+
+// Get a site's uploaded photo - needs sites:read
+router.get('/:id/photo', requirePermission({ resource: 'sites', actions: ['read'] }), getSitePhoto);
 
 // Create site - needs sites:create
 router.post('/', requirePermission({ resource: 'sites', actions: ['create'] }), validate(siteCreateSchema), createSite);

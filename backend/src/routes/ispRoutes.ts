@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   listIsps,
   getIsp,
+  getIspLogo,
   createIsp,
   updateIsp,
   deleteIsp,
@@ -22,6 +23,9 @@ router.get('/', requirePermission({ resource: 'isps', actions: ['read'] }), list
 
 // Get ISP by ID - needs isps:read
 router.get('/:id', requirePermission({ resource: 'isps', actions: ['read'] }), getIsp);
+
+// Get an ISP's uploaded logo - needs isps:read
+router.get('/:id/photo', requirePermission({ resource: 'isps', actions: ['read'] }), getIspLogo);
 
 // Create ISP - needs isps:create
 router.post('/', requirePermission({ resource: 'isps', actions: ['create'] }), validate(ispCreateSchema), createIsp);

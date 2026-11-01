@@ -1,8 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { paymentApi } from '@/api/endpoints';
 
 const ACCEPTED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-export const RECEIPT_ACCEPT = 'image/png,image/jpeg,image/webp';
+export const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
+export const RECEIPT_ACCEPT = IMAGE_ACCEPT;
+
+/** Fetches a stored image (a file name, not a URL) as a blob. */
+export type StoredImageFetcher = (fileName: string) => Promise<{ data: Blob }>;
+
+function isDirectImage(value: string): boolean {
+  return value.startsWith('data:') || /^https?:\/\//i.test(value);
+}
 
 function readAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -60,6 +68,67 @@ export async function fileToCompressedDataUrl(
   ctx.fillRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
   return canvas.toDataURL('image/jpeg', quality);
+}
+
+/**
+ * Resolves any stored image value to a displayable URL. Data URLs and external
+ * URLs are used directly; a stored file name is fetched as a blob (the axios
+ * instance attaches the auth token, which a plain <img src> could not).
+ * Returns `undefined` while loading or when there is no image.
+ */
+export function useStoredImageUrl(
+  value: string | undefined | null,
+  fetchBlob?: StoredImageFetcher
+): string | undefined {
+  const [url, setUrl] = useState<string>();
+  const fetchRef = useRef(fetchBlob);
+
+  useEffect(() => {
+    fetchRef.current = fetchBlob;
+  }, [fetchBlob]);
+
+  useEffect(() => {
+    if (!value) {
+      setUrl(undefined);
+      return;
+    }
+
+    // Just-picked file or a logo hosted elsewhere — show it directly.
+    if (isDirectImage(value)) {
+      setUrl(value);
+      return;
+    }
+
+    const fetcher = fetchRef.current;
+    if (!fetcher) {
+      setUrl(undefined);
+      return;
+    }
+
+    let objectUrl: string | undefined;
+    let cancelled = false;
+
+    fetcher(value)
+      .then(res => {
+        const blobUrl = URL.createObjectURL(res.data as Blob);
+        if (cancelled) {
+          URL.revokeObjectURL(blobUrl);
+          return;
+        }
+        objectUrl = blobUrl;
+        setUrl(blobUrl);
+      })
+      .catch(() => {
+        if (!cancelled) setUrl(undefined);
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [value]);
+
+  return url;
 }
 
 /**

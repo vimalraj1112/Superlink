@@ -17,6 +17,13 @@ router.get(
   credentialController.getSiteCredentials
 );
 
+// Get the uploaded photo attached to a site's credentials
+router.get(
+  '/sites/:siteId/photo',
+  requirePermission({ resource: 'credentials', actions: ['read'] }),
+  credentialController.getCredentialPhoto
+);
+
 // Create or update credentials for a site
 router.post(
   '/sites/:siteId',
@@ -37,6 +44,8 @@ router.post(
           subnet: z.string().optional(),
         })).optional(),
         notes: z.string().optional(),
+        // Base64 data URL (new upload), stored file name (unchanged) or '' to clear.
+        photoUrl: z.string().max(9000000, 'Photo is too large').optional().nullable(),
       }),
     })
   ),

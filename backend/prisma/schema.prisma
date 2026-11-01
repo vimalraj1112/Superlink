@@ -141,6 +141,7 @@ model Site {
   renewalDate         DateTime?
   disconnectedAt      DateTime?
   notes               String?
+  photoUrl            String?
   createdById         String
   updatedById         String?
   createdAt           DateTime        @default(now())
@@ -175,6 +176,7 @@ model SiteCredential {
   pppoePasswordEnc String?
   staticIps        Json?
   notes            String?
+  photoUrl         String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   site             Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)

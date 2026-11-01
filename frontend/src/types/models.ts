@@ -92,6 +92,8 @@ export interface Site {
   renewalDate?: string;
   disconnectedAt?: string;
   notes?: string;
+  /** Stored photo file name, external URL, or a just-picked data URL. */
+  photoUrl?: string;
   createdById: string;
   updatedById?: string;
   createdAt: string;
@@ -241,6 +243,8 @@ export interface SiteCredential {
   pppoePasswordEnc?: string;
   staticIps?: any;
   notes?: string;
+  /** Stored photo file name, external URL, or a just-picked data URL. */
+  photoUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/config/db';
@@ -8,6 +9,13 @@ import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResp
 import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
 import { siteReadScope } from '@/utils/accessScope';
 import { SiteStatus } from '@prisma/client';
+import {
+  isDataUrlImage,
+  saveEntityImage,
+  deleteEntityImage,
+  entityImagePath,
+  imageContentType,
+} from '@/utils/fileStorage';
 
 export const siteCreateSchema = z.object({
   body: z.object({
@@ -32,6 +40,9 @@ export const siteCreateSchema = z.object({
     activeDate: z.string().datetime().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
     renewalDate: z.string().datetime().optional().nullable().or(z.literal('')).transform(val => val === '' ? undefined : val),
     notes: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    // Optional site photo. Accepts a base64 data URL (new upload), a stored file
+    // name (unchanged) or '' to clear it on update.
+    photoUrl: z.string().max(9000000, 'Photo is too large').optional().nullable(),
   }),
 });
 
@@ -139,12 +150,42 @@ export const getSite = asyncHandler(async (req: AuthenticatedRequest, res: Respo
   sendSuccess(res, site, 'Site fetched successfully');
 });
 
+/** Streams a site's uploaded photo. Guarded by auth + the same read scope as the site. */
+export const getSitePhoto = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+
+  const site = await prisma.site.findFirst({
+    where: { id, ...siteReadScope(req.user) },
+    select: { photoUrl: true },
+  });
+
+  if (!site || !site.photoUrl) {
+    sendNotFound(res, 'No photo attached to this site');
+    return;
+  }
+
+  const filePath = entityImagePath(site.photoUrl);
+  if (!fs.existsSync(filePath)) {
+    sendNotFound(res, 'Site photo file is missing');
+    return;
+  }
+
+  res.setHeader('Content-Type', imageContentType(site.photoUrl));
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.sendFile(filePath);
+});
+
 export const createSite = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const siteCode = req.body.siteCode || (await generateSiteCode());
+  const { photoUrl, ...data } = req.body;
+
+  // Only a genuine upload is persisted; anything else is ignored.
+  const photoFile = isDataUrlImage(photoUrl) ? saveEntityImage(photoUrl, 'site') : undefined;
 
   const site = await prisma.site.create({
     data: {
-      ...req.body,
+      ...data,
+      photoUrl: photoFile,
       siteCode,
       activeDate: req.body.activeDate ? new Date(req.body.activeDate) : null,
       renewalDate: req.body.renewalDate ? new Date(req.body.renewalDate) : null,
@@ -161,11 +202,28 @@ export const createSite = asyncHandler(async (req: AuthenticatedRequest, res: Re
 
 export const updateSite = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
+  const { photoUrl, ...data } = req.body;
 
   const updateData: Prisma.SiteUpdateInput = {
-    ...req.body,
+    ...data,
     updatedById: req.user!.userId,
   };
+
+  if (photoUrl !== undefined) {
+    const current = await prisma.site.findUnique({ where: { id }, select: { photoUrl: true } });
+
+    if (isDataUrlImage(photoUrl)) {
+      // New photo uploaded — store it and drop the previous file.
+      const fileName = saveEntityImage(photoUrl, 'site');
+      deleteEntityImage(current?.photoUrl);
+      updateData.photoUrl = fileName;
+    } else if (!photoUrl) {
+      // Explicitly cleared by the user.
+      deleteEntityImage(current?.photoUrl);
+      updateData.photoUrl = null;
+    }
+    // Any other value (e.g. the unchanged stored file name) is left untouched.
+  }
 
   if (req.body.activeDate !== undefined) {
     updateData.activeDate = req.body.activeDate ? new Date(req.body.activeDate) : null;

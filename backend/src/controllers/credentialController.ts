@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import fs from 'fs';
 import { Prisma } from '@prisma/client';
 import { sendSuccess, sendError, sendNotFound, sendForbidden, sendPaginatedSuccess } from '../utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '../utils/pagination';
@@ -6,6 +7,13 @@ import { encrypt, decrypt } from '../services/encryptionService';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { prisma } from '../config/db';
+import {
+  isDataUrlImage,
+  saveEntityImage,
+  deleteEntityImage,
+  entityImagePath,
+  imageContentType,
+} from '../utils/fileStorage';
 
 
 // Helper to check if user can access site credentials
@@ -73,11 +81,60 @@ export const getSiteCredentials = async (
       pppoeUsername: credentials.pppoeUsername,
       staticIps: credentials.staticIps,
       notes: credentials.notes,
+      photoUrl: credentials.photoUrl,
       hasPassword: !!credentials.passwordEnc,
       hasPppoePassword: !!credentials.pppoePasswordEnc,
       createdAt: credentials.createdAt,
       updatedAt: credentials.updatedAt,
     }, 'Credentials fetched successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/** Streams the uploaded photo attached to a site's credentials. */
+export const getCredentialPhoto = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const siteId = req.params.siteId;
+
+    const site = await prisma.site.findUnique({
+      where: { id: siteId },
+      select: { id: true, ispId: true, customerId: true },
+    });
+
+    if (!site) {
+      sendNotFound(res, 'Site not found');
+      return;
+    }
+
+    if (!canAccessCredentials(req.user!, site)) {
+      sendForbidden(res, 'You do not have permission to view credentials for this site');
+      return;
+    }
+
+    const credentials = await prisma.siteCredential.findUnique({
+      where: { siteId },
+      select: { photoUrl: true },
+    });
+
+    if (!credentials || !credentials.photoUrl) {
+      sendNotFound(res, 'No photo attached to these credentials');
+      return;
+    }
+
+    const filePath = entityImagePath(credentials.photoUrl);
+    if (!fs.existsSync(filePath)) {
+      sendNotFound(res, 'Credential photo file is missing');
+      return;
+    }
+
+    res.setHeader('Content-Type', imageContentType(credentials.photoUrl));
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.sendFile(filePath);
   } catch (error) {
     next(error);
   }
@@ -90,7 +147,7 @@ export const createOrUpdateCredentials = async (
 ): Promise<void> => {
   try {
     const siteId = req.params.siteId;
-    const { username, password, routerIp, routerModel, vlanId, pppoeUsername, pppoePassword, staticIps, notes } = req.body;
+    const { username, password, routerIp, routerModel, vlanId, pppoeUsername, pppoePassword, staticIps, notes, photoUrl } = req.body;
 
     // Verify site exists
     const site = await prisma.site.findUnique({
@@ -120,6 +177,22 @@ export const createOrUpdateCredentials = async (
       pppoePasswordEnc = encrypt(pppoePassword);
     }
 
+    // Resolve the photo before upserting so we know which old file to remove.
+    // undefined = leave untouched, null = clear, string = new stored file.
+    const existing = await prisma.siteCredential.findUnique({
+      where: { siteId },
+      select: { photoUrl: true },
+    });
+
+    let photoFile: string | null | undefined;
+    if (isDataUrlImage(photoUrl)) {
+      photoFile = saveEntityImage(photoUrl, 'cred');
+      deleteEntityImage(existing?.photoUrl);
+    } else if (photoUrl === '' || photoUrl === null) {
+      photoFile = null;
+      deleteEntityImage(existing?.photoUrl);
+    }
+
     const credentials = await prisma.siteCredential.upsert({
       where: { siteId },
       create: {
@@ -133,6 +206,7 @@ export const createOrUpdateCredentials = async (
         pppoePasswordEnc,
         staticIps: staticIps ? JSON.parse(JSON.stringify(staticIps)) : Prisma.JsonNull,
         notes,
+        photoUrl: typeof photoFile === 'string' ? photoFile : undefined,
       },
       update: {
         username,
@@ -144,6 +218,7 @@ export const createOrUpdateCredentials = async (
         ...(pppoePasswordEnc && { pppoePasswordEnc }),
         staticIps: staticIps ? JSON.parse(JSON.stringify(staticIps)) : Prisma.JsonNull,
         notes,
+        ...(photoFile !== undefined ? { photoUrl: photoFile } : {}),
       },
     });
 
@@ -157,6 +232,7 @@ export const createOrUpdateCredentials = async (
       pppoeUsername: credentials.pppoeUsername,
       staticIps: credentials.staticIps,
       notes: credentials.notes,
+      photoUrl: credentials.photoUrl,
       hasPassword: !!credentials.passwordEnc,
       hasPppoePassword: !!credentials.pppoePasswordEnc,
       createdAt: credentials.createdAt,
@@ -271,9 +347,17 @@ export const deleteCredentials = async (
       return;
     }
 
+    const existing = await prisma.siteCredential.findUnique({
+      where: { siteId },
+      select: { photoUrl: true },
+    });
+
     await prisma.siteCredential.delete({
       where: { siteId },
     });
+
+    // Remove the stored photo alongside the record (best-effort).
+    deleteEntityImage(existing?.photoUrl);
 
     sendSuccess(res, null, 'Credentials deleted successfully');
   } catch (error) {
@@ -340,6 +424,7 @@ export const listAllCredentials = async (
       routerModel: c.routerModel,
       vlanId: c.vlanId,
       pppoeUsername: c.pppoeUsername,
+      photoUrl: c.photoUrl,
       hasPassword: !!c.passwordEnc,
       hasPppoePassword: !!c.pppoePasswordEnc,
       updatedAt: c.updatedAt,

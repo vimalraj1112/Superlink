@@ -6,6 +6,7 @@ import { ispApi, siteApi } from '@/api/endpoints';
 import { toast } from 'sonner';
 import type { ISP, Site } from '@/types/models';
 import StatusBadge from '@/components/common/StatusBadge';
+import ImageThumb from '@/components/common/ImageThumb';
 import IspForm from '@/components/forms/IspForm';
 
 export default function IspDetail() {
@@ -236,9 +237,17 @@ export default function IspDetail() {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-[#0f766e] flex items-center justify-center shadow-lg shadow-brand-500/25 flex-shrink-0">
-            <Wifi className="w-7 h-7 text-[#ffffff]" />
-          </div>
+          <ImageThumb
+            value={isp.logoUrl}
+            fetchBlob={() => ispApi.getPhoto(isp.id)}
+            alt={`${isp.displayName || isp.name} logo`}
+            className="w-12 h-12 rounded-xl object-cover shadow-lg flex-shrink-0"
+            fallback={
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-[#0f766e] flex items-center justify-center shadow-lg shadow-brand-500/25 flex-shrink-0">
+                <Wifi className="w-7 h-7 text-[#ffffff]" />
+              </div>
+            }
+          />
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{isp.displayName || isp.name}</h1>
             <p className="text-gray-500 mt-1">{isp.name}</p>

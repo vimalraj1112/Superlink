@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import fs from 'fs';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/config/db';
@@ -6,6 +7,14 @@ import { AuthenticatedRequest } from '@/middleware/auth';
 import { asyncHandler } from '@/middleware/errorHandler';
 import { sendSuccess, sendPaginatedSuccess, sendNotFound } from '@/utils/apiResponse';
 import { getPaginationParams, getSearchQuery } from '@/utils/pagination';
+import {
+  isDataUrlImage,
+  isExternalImageUrl,
+  saveEntityImage,
+  deleteEntityImage,
+  entityImagePath,
+  imageContentType,
+} from '@/utils/fileStorage';
 
 export const ispCreateSchema = z.object({
   body: z.object({
@@ -18,7 +27,9 @@ export const ispCreateSchema = z.object({
     city: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     state: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
     website: z.string().url().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
-    logoUrl: z.string().url().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
+    // Logo/photo: either a base64 data URL (new upload), an external image URL,
+    // a stored file name (unchanged) or '' to clear it on update.
+    logoUrl: z.string().max(9000000, 'Logo is too large').optional().nullable(),
     latitude: z.number().optional(),
     longitude: z.number().optional(),
     notes: z.string().optional().or(z.literal('')).transform(val => val === '' ? undefined : val),
@@ -86,10 +97,51 @@ export const getIsp = asyncHandler(async (req: Request, res: Response) => {
   sendSuccess(res, isp, 'ISP fetched successfully');
 });
 
+/** Streams an ISP's uploaded logo. */
+export const getIspLogo = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const isp = await prisma.iSP.findUnique({
+    where: { id },
+    select: { logoUrl: true },
+  });
+
+  if (!isp || !isp.logoUrl) {
+    sendNotFound(res, 'No logo attached to this ISP');
+    return;
+  }
+
+  // A logo hosted elsewhere is used directly by the client, not streamed here.
+  if (isExternalImageUrl(isp.logoUrl)) {
+    sendNotFound(res, 'Logo is hosted externally');
+    return;
+  }
+
+  const filePath = entityImagePath(isp.logoUrl);
+  if (!fs.existsSync(filePath)) {
+    sendNotFound(res, 'ISP logo file is missing');
+    return;
+  }
+
+  res.setHeader('Content-Type', imageContentType(isp.logoUrl));
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.sendFile(filePath);
+});
+
 export const createIsp = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const { logoUrl, ...data } = req.body;
+
+  // A new upload is saved to disk; a full URL is kept as-is.
+  const storedLogo = isDataUrlImage(logoUrl)
+    ? saveEntityImage(logoUrl, 'isp')
+    : isExternalImageUrl(logoUrl)
+      ? logoUrl
+      : undefined;
+
   const isp = await prisma.iSP.create({
     data: {
-      ...req.body,
+      ...data,
+      logoUrl: storedLogo,
       createdById: req.user!.userId,
     },
   });
@@ -99,13 +151,33 @@ export const createIsp = asyncHandler(async (req: AuthenticatedRequest, res: Res
 
 export const updateIsp = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
+  const { logoUrl, ...data } = req.body;
+
+  const updateData: Prisma.ISPUpdateInput = {
+    ...data,
+    updatedById: req.user!.userId,
+  };
+
+  if (logoUrl !== undefined) {
+    const current = await prisma.iSP.findUnique({ where: { id }, select: { logoUrl: true } });
+
+    if (isDataUrlImage(logoUrl)) {
+      // New logo uploaded — store it and drop the previous local file.
+      const fileName = saveEntityImage(logoUrl, 'isp');
+      deleteEntityImage(current?.logoUrl);
+      updateData.logoUrl = fileName;
+    } else if (!logoUrl) {
+      // Explicitly cleared by the user.
+      deleteEntityImage(current?.logoUrl);
+      updateData.logoUrl = null;
+    }
+    // Any other value (e.g. the unchanged stored name or an external URL) is
+    // left untouched.
+  }
 
   const isp = await prisma.iSP.update({
     where: { id },
-    data: {
-      ...req.body,
-      updatedById: req.user!.userId,
-    },
+    data: updateData,
   });
 
   sendSuccess(res, isp, 'ISP updated successfully');

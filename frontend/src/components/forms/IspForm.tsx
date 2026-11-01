@@ -6,6 +6,7 @@ import { ispApi } from '@/api/endpoints';
 import type { ISP } from '@/types/models';
 import { toast } from 'sonner';
 import Modal from '@/components/common/Modal';
+import ImageUploadField from '@/components/common/ImageUploadField';
 
 interface IspFormProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function IspForm({ isOpen, onClose, initialData }: IspFormProps) 
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const isEditing = !!initialData;
+  const ispId = initialData?.id || id;
 
   const [formData, setFormData] = useState({
     name: '',
@@ -90,9 +92,6 @@ export default function IspForm({ isOpen, onClose, initialData }: IspFormProps) 
     if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
       newErrors.website = 'Website must start with http:// or https://';
     }
-    if (formData.logoUrl && !/^https?:\/\/.+/.test(formData.logoUrl)) {
-      newErrors.logoUrl = 'Logo URL must start with http:// or https://';
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -158,12 +157,11 @@ export default function IspForm({ isOpen, onClose, initialData }: IspFormProps) 
     };
 
     Object.keys(submitData).forEach(key => {
-      if (submitData[key] === '') {
+      // logoUrl is sent even when empty so the backend knows to clear it.
+      if (submitData[key] === '' && key !== 'logoUrl') {
         delete submitData[key];
       }
     });
-
-    const ispId = initialData?.id || id;
 
     if (isEditing && ispId) {
       updateMutation.mutate({ id: ispId, data: submitData });
@@ -252,15 +250,14 @@ export default function IspForm({ isOpen, onClose, initialData }: IspFormProps) 
               {errors.website && <p className="text-sm text-red-500 mt-1">{errors.website}</p>}
             </div>
             <div className="md:col-span-2">
-              <label className="label">Logo URL</label>
-              <input
-                type="url"
+              <ImageUploadField
+                label="ISP Logo / Photo"
                 value={formData.logoUrl}
-                onChange={(e) => handleChange('logoUrl', e.target.value)}
-                className={`input ${errors.logoUrl ? 'border-red-500' : ''}`}
-                placeholder="https://isp.com/logo.png"
+                onChange={(value) => handleChange('logoUrl', value)}
+                fetchBlob={ispId ? () => ispApi.getPhoto(ispId) : undefined}
+                helpText="Logo or office photo — PNG, JPG or WebP, resized automatically"
+                error={errors.logoUrl}
               />
-              {errors.logoUrl && <p className="text-sm text-red-500 mt-1">{errors.logoUrl}</p>}
             </div>
           </div>
         </div>

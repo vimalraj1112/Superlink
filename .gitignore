@@ -58,7 +58,7 @@ backend/check-user.js
 backend/output.txt
 test_customer_api.js
 
-# Uploaded files (payment screenshots/receipts) — not in the JSON DB backup
+# Uploaded files (payment receipts and site/ISP/credential photos) — not in the JSON DB backup
 backend/uploads/
 
 # OS
